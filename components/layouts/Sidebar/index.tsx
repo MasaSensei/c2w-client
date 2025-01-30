@@ -1,13 +1,21 @@
+"use client";
+
+import { useState } from "react";
 import { Cores } from "@/components/core";
+import { cn } from "@/lib/utils";
 
 const Sidebar = () => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   return (
-    <aside className="h-screen overflow-y-auto w-64 bg-white text-sm flex flex-col border-r p-4">
-      <div className="mb-8">
-        <button
-          type="button"
-          className="w-full bg-transparent flex items-center gap-2"
-        >
+    <aside
+      className={cn(
+        "h-screen overflow-y-auto bg-white text-sm flex flex-col border-r p-4 transition-all duration-300",
+        isCollapsed ? "w-16" : "w-64"
+      )}
+    >
+      <div className="mb-8 flex items-center">
+        <button onClick={() => setIsCollapsed(!isCollapsed)}>
           <span className="text-2xl">
             <svg
               stroke="currentColor"
@@ -22,17 +30,31 @@ const Sidebar = () => {
               <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"></path>
             </svg>
           </span>
-          <h1 className="text-xl font-bold flex items-baseline">
-            C{" "}
-            <span className="text-[12px] font-extrabold flex leading-none">
-              2
-            </span>{" "}
-            W Dashboard
-          </h1>
         </button>
+        {!isCollapsed && (
+          <h1
+            className={cn(
+              "text-xl font-bold ml-2 whitespace-nowrap overflow-hidden transition-all duration-300",
+              isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
+            )}
+          >
+            C<span className="text-[12px] font-extrabold">2</span>W Dashboard
+          </h1>
+        )}
       </div>
+
+      {/* Menu */}
       <nav>
-        <h2 className="mb-2 text-xs uppercase text-slate-400">main menu</h2>
+        {!isCollapsed && (
+          <h2
+            className={cn(
+              "mb-2 text-xs uppercase text-slate-400 whitespace-nowrap overflow-hidden transition-all duration-300",
+              isCollapsed ? "w-0" : "w-auto"
+            )}
+          >
+            Main Menu
+          </h2>
+        )}
         <ul>
           <li className="mb-2">
             <Cores.Button
@@ -53,7 +75,7 @@ const Sidebar = () => {
                 </svg>
               }
             >
-              Suppliers
+              {!isCollapsed && "Suppliers"}
             </Cores.Button>
           </li>
         </ul>

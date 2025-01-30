@@ -32,7 +32,7 @@ export default function RootLayout({
           <Layouts.Sidebar />
           <div className="flex-1 flex flex-col h-screen">
             <Layouts.Header />
-            <main className="flex-1 overflow-hidden">{children}</main>
+            <main className="flex-1">{children}</main>
           </div>
         </div>
       </body>

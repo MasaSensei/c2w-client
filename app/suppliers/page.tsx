@@ -1,50 +1,69 @@
+"use client";
+
 import { Cores } from "@/components/core";
+import { Fragments } from "@/components/fragments";
+import axios from "axios";
+import { useEffect, useState } from "react";
 
 const SuppliersPage = () => {
+  const [train, setTrain] = useState<any>([]);
+  const headers = [
+    "Train ID",
+    "Destination Station",
+    "Departure Time",
+    "Arrival Time",
+  ];
+
+  useEffect(() => {
+    const response = axios.get(`https://api.comuline.com/v1/schedule/kpb`);
+    response.then((res) => {
+      setTrain(res.data.data);
+    });
+  }, []);
+
+  console.log(train);
+
+  // // Fungsi untuk mengubah data sesuai dengan header
+  const formatData = (data: any) => {
+    return data?.map((item: any) => {
+      return headers.reduce((acc, header) => {
+        switch (header) {
+          case "Train ID":
+            acc[header] = item.train_id;
+            break;
+          case "Destination Station":
+            acc[header] = item.station_destination_id;
+            break;
+          case "Departure Time":
+            acc[header] = item.departs_at;
+            break;
+          case "Arrival Time":
+            acc[header] = item.arrives_at;
+            break;
+          default:
+            acc[header] = item[header.toLowerCase()];
+        }
+        return acc;
+      }, {} as { [key: string]: string });
+    });
+  };
+
+  const formattedData = formatData(train);
+
   return (
     <main className="h-full flex flex-col bg-neutral-300">
-      <div className="bg-white border-b p-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-black">Suppliers</h1>
-        <div className="flex items-center gap-2">
-          <Cores.Button
-            type="filter"
-            className="hover:text-white"
-            icon={
-              <svg
-                stroke="currentColor"
-                fill="currentColor"
-                strokeWidth="0"
-                viewBox="0 0 512 512"
-                height="12"
-                width="12"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path d="M472 168H40a24 24 0 0 1 0-48h432a24 24 0 0 1 0 48zm-80 112H120a24 24 0 0 1 0-48h272a24 24 0 0 1 0 48zm-96 112h-80a24 24 0 0 1 0-48h80a24 24 0 0 1 0 48z"></path>
-              </svg>
-            }
-          >
-            Filter
-          </Cores.Button>
-          <Cores.Button
-            type="add"
-            icon={
-              <svg
-                stroke="currentColor"
-                fill="currentColor"
-                strokeWidth="0"
-                viewBox="0 0 512 512"
-                height="14"
-                width="14"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path d="M416 277.333H277.333V416h-42.666V277.333H96v-42.666h138.667V96h42.666v138.667H416v42.666z"></path>
-              </svg>
-            }
-          >
-            Add New
-          </Cores.Button>
+      <Fragments.HeaderWithActions
+        title="Suppliers"
+        onFilter={() => {}}
+        onAdd={() => {}}
+      />
+      <section className="flex-1 p-4">
+        <div className="bg-white border boder-gray-200 rounded-lg w-full relative">
+          <div className="w-fit min-w-full sm:flex sm:justify-center">
+            <Cores.Table headers={headers} data={formattedData} />
+          </div>
         </div>
-      </div>
+      </section>
     </main>
   );
 };
