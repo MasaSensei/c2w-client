@@ -5,119 +5,105 @@ import { Fragments } from "@/components/fragments";
 import { Layouts } from "@/components/layouts";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { useForm, SubmitHandler } from "react-hook-form"; // import useForm
+import { Supplier } from "@/types/suppliers";
 import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 interface Field {
   name: string;
   label: string;
-  type: "text" | "select" | "password" | "email";
-  required?: boolean;
-  options?: { value: string; label: string }[];
+  type: "text";
 }
 
+const formSchema = z.object({
+  name: z.string(),
+  contact: z.string(),
+  address: z.string(),
+  remarks: z.string(),
+});
+
 const SuppliersPage = () => {
-  const [train, setTrain] = useState<any>([]);
+  const [data, setdata] = useState<Supplier[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedData, setSelectedData] = useState<any>(null);
-  const headers = [
-    "Train ID",
-    "Destination Station",
-    "Departure Time",
-    "Arrival Time",
-  ];
+  const [selectedData, setSelectedData] = useState<Supplier | null>(null);
+  const headers = ["Name", "Contact Number", "Address", "Remarks"];
 
   useEffect(() => {
-    const response = axios.get(`https://api.comuline.com/v1/schedule/kpb`);
+    const response = axios.get(`${process.env.NEXT_PUBLIC_API_URL}/suppliers`);
     response.then((res) => {
-      setTrain(res.data.data);
+      setdata(res.data.data);
     });
   }, []);
 
-  const fields: Field[] = [
-    {
-      name: "train_id", // Sesuaikan dengan nama properti dari API
-      label: "Train ID",
-      type: "text",
-      required: true,
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      contact: "",
+      address: "",
+      remarks: "",
     },
-    {
-      name: "station_destination_id", // Sesuaikan dengan nama properti dari API
-      label: "Destination Station",
-      type: "text",
-      required: true,
-    },
-    {
-      name: "departs_at", // Sesuaikan dengan nama properti dari API
-      label: "Departure Time",
-      type: "text",
-      required: true,
-    },
-    {
-      name: "arrives_at", // Sesuaikan dengan nama properti dari API
-      label: "Arrival Time",
-      type: "text",
-      required: true,
-    },
-    {
-      name: "remarks", // Ini bisa ditambahkan sesuai kebutuhan, misalnya 'remarks'
-      label: "Remarks",
-      type: "text",
-    },
-  ];
-
-  const formSchema = z.object({
-    train_id: z.string(),
-    station_destination_id: z.string(),
-    departs_at: z.string(),
-    arrives_at: z.string(),
   });
 
-  const formatData = (data: any) => {
-    return data?.map((item: any) => {
+  const fields: Field[] = [
+    { name: "name" as const, label: "Name", type: "text" },
+    { name: "contact" as const, label: "Contact Number", type: "text" },
+    { name: "address" as const, label: "Address", type: "text" },
+    { name: "remarks" as const, label: "Remarks", type: "text" },
+  ];
+
+  const formatData = (data: Supplier[]) => {
+    if (!Array.isArray(data)) return [];
+
+    return data.map((item) => {
       return headers.reduce((acc, header) => {
-        switch (header) {
-          case "Train ID":
-            acc[header] = item.train_id;
-            break;
-          case "Destination Station":
-            acc[header] = item.station_destination_id;
-            break;
-          case "Departure Time":
-            acc[header] = item.departs_at;
-            break;
-          case "Arrival Time":
-            acc[header] = item.arrives_at;
-            break;
-          default:
-            acc[header] = item[header.toLowerCase()];
+        const keyMap: Record<string, keyof Supplier> = {
+          Name: "name",
+          "Contact Number": "contact",
+          Address: "address",
+          Remarks: "remarks",
+        };
+
+        if (keyMap[header]) {
+          const value = item[keyMap[header]];
+          acc[header] = value ? String(value) : "-";
         }
+
         return acc;
-      }, {} as { [key: string]: string });
+      }, {} as Record<string, string>);
     });
   };
 
-  const formattedData = formatData(train);
+  const formattedData = formatData(data);
 
   const handleModal = () => {
     setIsOpen(!isOpen);
     setSelectedData(null);
   };
 
-  const handleSubmitForm = (data: any) => {
-    console.log("Form submitted with data:", data);
+  const handleSubmitForm: SubmitHandler<Supplier> = async (data) => {
+    console.log("Received form data:", data);
+    // Add your submit logic here, e.g. API call to save data
   };
 
-  const handleEdit = (data: any) => {
-    console.log("Edit data:", data);
-    setSelectedData({
-      train_id: data["Train ID"],
-      station_destination_id: data["Destination Station"],
-      departs_at: data["Departure Time"],
-      arrives_at: data["Arrival Time"],
-      remarks: data["Remarks"] || "-", // Sesuaikan jika ada field lain
-    });
+  const handleEdit = (data: z.infer<typeof formSchema>) => {
+    console.log(data);
     setIsOpen(true);
   };
+
+  useEffect(() => {
+    if (selectedData) {
+      fields.forEach((field) => {
+        setValue(field.name as any, selectedData[field.name as keyof Supplier]); // Set default value for selected data
+      });
+    }
+  }, [selectedData, setValue]);
 
   return (
     <main className="h-full flex flex-col bg-neutral-300">
@@ -131,13 +117,14 @@ const SuppliersPage = () => {
           onClose={handleModal}
           title={selectedData ? "Edit Supplier" : "Add Supplier"}
         >
-          <Layouts.Form
-            onSubmit={handleSubmitForm}
-            formSchema={formSchema}
-            onClose={handleModal}
-            fields={fields}
-            initialData={selectedData}
-          />
+          <form onSubmit={handleSubmit(handleSubmitForm)}>
+            <Layouts.Form
+              fields={fields}
+              register={register} // Pass register here
+              errors={errors} // Pass errors here
+              onClose={handleModal}
+            />
+          </form>
         </Cores.Modal>
       )}
       <section className="flex-1 p-4">

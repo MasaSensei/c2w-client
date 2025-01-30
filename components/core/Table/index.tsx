@@ -214,7 +214,7 @@ const Table = ({ headers, data, onEdit, onDelete }: TableProps) => {
         </tbody>
       </table>
       <div className="my-4 mx-10">
-        <PaginationContent className="mt-4 flex items-center justify-between">
+        <PaginationContent className="flex items-center justify-between">
           {/* Previous Button */}
           <PaginationItem>
             <PaginationPrevious

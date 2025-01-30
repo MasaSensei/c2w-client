@@ -1,83 +1,45 @@
 "use client";
 
-import { useForm } from "react-hook-form";
-import { useEffect } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Cores } from "@/components/core";
+import { FieldValues, Path, UseFormRegister } from "react-hook-form";
 
 interface Field {
   name: string;
   label: string;
   type: "text" | "select" | "password" | "email";
-  required?: boolean;
-  options?: { value: string; label: string }[]; // Hanya untuk tipe 'select'
+  options?: { value: string; label: string }[]; // Hanya untuk select
 }
 
-type FormData = {
-  [key: string]: string; // Misalnya, data yang dikirim adalah string
-};
-
-interface FormProps {
+interface FormProps<T extends FieldValues> {
   fields: Field[];
-  formSchema: z.ZodSchema;
-  onSubmit: (data: FormData) => void;
+  register: UseFormRegister<T>;
+  errors: Partial<Record<keyof T, { message?: string }>>;
   onClose: () => void;
-  initialData?: FormData;
 }
 
-const Form: React.FC<FormProps> = ({
+const Form = <T extends FieldValues>({
   fields,
-  formSchema,
-  onSubmit,
+  register,
+  errors,
   onClose,
-  initialData,
-}) => {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-  } = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: initialData || {},
-  });
-
-  const onSubmitHandler = (data: FormData) => {
-    console.log("Form Data:", data);
-    onSubmit(data);
-  };
-
-  useEffect(() => {
-    if (initialData) {
-      Object.keys(initialData).forEach((key) => {
-        setValue(key, initialData[key]);
-      });
-    }
-  }, [initialData, setValue]);
-
+}: FormProps<T>) => {
   return (
-    <form className="space-y-6" onSubmit={handleSubmit(onSubmitHandler)}>
+    <div className="space-y-6">
       {fields.map((field) => (
-        <Cores.InputFields
-          key={field.name}
-          id={field.name}
-          label={field.label}
-          value={initialData ? initialData[field.name] : ""}
-          type={field.type}
-          {...register(field.name)} // Mendaftarkan input untuk react-hook-form
-          required={field.required}
-          options={field.options}
-        />
-      ))}
-
-      {Object.keys(errors).length > 0 && (
-        <div className="text-red-500 text-sm">
-          {Object.values(errors).map((err, index) => (
-            <p key={index}>{err?.message}</p>
-          ))}
+        <div key={field.name}>
+          <Cores.InputFields
+            label={field.label}
+            type={field.type}
+            {...register(field.name as Path<T>)} // register field here
+            options={field.options}
+          />
+          {errors[field.name as keyof T]?.message && (
+            <p className="text-red-500 text-sm">
+              {errors[field.name as keyof T]?.message}
+            </p>
+          )}
         </div>
-      )}
+      ))}
 
       <div className="flex gap-4 justify-center mt-6">
         <button
@@ -94,7 +56,7 @@ const Form: React.FC<FormProps> = ({
           Submit
         </button>
       </div>
-    </form>
+    </div>
   );
 };
 

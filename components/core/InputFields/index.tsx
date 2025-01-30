@@ -7,37 +7,34 @@ interface Option {
 }
 
 interface InputFieldProps {
-  id: string;
+  name: string;
   label: string;
   type?: "text" | "select" | "password" | "email";
-  value?: string;
-  onChange: React.ChangeEventHandler<HTMLInputElement | HTMLSelectElement>;
-  required?: boolean;
+  value?: string | number;
+  defaultValue?: string | number;
+  onChange?: () => void;
   options?: Option[];
 }
 
 const InputFields: React.FC<InputFieldProps> = ({
-  id,
   label,
   type = "text",
   value,
+  name,
+  defaultValue,
   onChange,
-  required = false,
   options,
 }) => {
   return (
     <div className="flex flex-col space-y-2">
-      <Label htmlFor={id} className="text-sm font-medium text-gray-700">
+      <Label htmlFor={name} className="text-sm font-medium text-gray-700">
         {label}
       </Label>
       {type === "select" ? (
         <select
-          id={id}
-          name={id}
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-          value={value}
+          value={value || ""}
           onChange={onChange}
-          required={required}
         >
           {options?.map((option, index) => (
             <option key={index} value={option.value}>
@@ -48,12 +45,10 @@ const InputFields: React.FC<InputFieldProps> = ({
       ) : (
         <Input
           type={type}
-          id={id}
-          name={id} // pastikan `name` ada di input supaya formData bisa diupdate
-          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-          value={value}
+          name={name}
+          defaultValue={defaultValue}
           onChange={onChange}
-          required={required}
+          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
         />
       )}
     </div>
