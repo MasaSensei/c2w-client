@@ -144,10 +144,9 @@ const Table = ({ headers, data, onEdit, onDelete }: TableProps) => {
                 <Input
                   type="text"
                   className="w-full bg-white px-2 py-2 border rounded-md text-xs"
-                  value={search[header]}
+                  value={search[header] ?? ""}
                   onChange={(e) => handleSearchChange(e, header)}
                   placeholder={`Cari ${header}`}
-                  defaultValue={""}
                 />
               </th>
             ))}
