@@ -205,7 +205,7 @@ const Table = ({ headers, data, onEdit, onDelete }: TableProps) => {
             <tr>
               <td
                 colSpan={headers.length}
-                className="relative px-5 py-4 align-top"
+                className="relative px-5 text-center py-4 align-top"
               >
                 Data tidak ditemukan
               </td>

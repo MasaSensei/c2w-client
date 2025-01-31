@@ -5,33 +5,31 @@ import { Fragments } from "@/components/fragments";
 import { Layouts } from "@/components/layouts";
 import { useEffect, useMemo, useState } from "react";
 import { useForm, SubmitHandler, Path } from "react-hook-form";
-import { Supplier } from "@/types/suppliers";
+import { Code } from "@/types/codes";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Swal from "sweetalert2";
-import { SuppliersService } from "@/services/suppliers.service";
+import { CodesService } from "@/services/codes.service";
 import { ClipLoader } from "react-spinners";
 
 const formSchema = z.object({
-  name: z.string().min(1, { message: "Name is required" }),
-  contact: z.string().min(1, { message: "Contact Number is required" }),
-  address: z.string().min(1, { message: "Address is required" }),
+  code: z.string().min(1, { message: "Code is required" }),
   remarks: z.string(),
 });
 
 const CodePage = () => {
-  const [data, setdata] = useState<Supplier[]>([]);
+  const [data, setdata] = useState<Code[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedData, setSelectedData] = useState<Supplier | null>(null);
+  const [selectedData, setSelectedData] = useState<Code | null>(null);
   const [loading, setLoading] = useState(false);
-  const headers = ["Name", "Contact Number", "Address", "Remarks"];
+  const headers = ["Kode", "Remarks"];
 
   useEffect(() => {
-    SuppliersService.getAll()
+    CodesService.getAll()
       .then((res) => {
         setdata(res.data.data);
       })
-      .catch((err) => console.error("Error fetching suppliers:", err));
+      .catch((err) => console.error("Error fetching code:", err));
   }, []);
 
   const {
@@ -43,9 +41,7 @@ const CodePage = () => {
     resolver: zodResolver(formSchema),
     shouldUnregister: false,
     defaultValues: {
-      name: "",
-      contact: "",
-      address: "",
+      code: "",
       remarks: "",
     },
   });
@@ -53,24 +49,10 @@ const CodePage = () => {
   const fields = useMemo(
     () => [
       {
-        name: "name",
-        label: "Name",
+        name: "code",
+        label: "Kode",
         type: "text",
-        placeholder: "Name",
-        required: true,
-      },
-      {
-        name: "contact",
-        label: "Contact Number",
-        type: "number",
-        placeholder: "Contact Number",
-        required: true,
-      },
-      {
-        name: "address",
-        label: "Address",
-        type: "text",
-        placeholder: "Address",
+        placeholder: "Code",
         required: true,
       },
       {
@@ -83,11 +65,9 @@ const CodePage = () => {
     []
   );
 
-  const formatData = (data: Supplier[]) => {
+  const formatData = (data: Code[]) => {
     return data.map((item) => ({
-      Name: item.name || "-",
-      "Contact Number": item.contact || "-",
-      Address: item.address || "-",
+      Kode: item.code || "-",
       Remarks: item.remarks || "-",
       id: item.id?.toString() || "-",
     }));
@@ -98,16 +78,14 @@ const CodePage = () => {
     setSelectedData(null);
   };
 
-  const handleSubmitForm: SubmitHandler<Supplier> = async (formData) => {
+  const handleSubmitForm: SubmitHandler<Code> = async (formData) => {
     try {
       if (selectedData) {
-        const response = await SuppliersService.update(
-          selectedData.id as number,
-          {
-            ...formData,
-            is_active: 1,
-          }
-        );
+        const response = await CodesService.update(selectedData.id as number, {
+          ...formData,
+          code: formData.code.toUpperCase(),
+          is_active: 1,
+        });
 
         setdata((prevData) =>
           prevData.map((item) =>
@@ -115,8 +93,9 @@ const CodePage = () => {
           )
         );
       } else {
-        const response = await SuppliersService.create({
+        const response = await CodesService.create({
           ...formData,
+          code: formData.code.toUpperCase(),
           is_active: 1,
         });
 
@@ -131,11 +110,9 @@ const CodePage = () => {
   };
 
   const handleEdit = (item: Record<string, string | number | boolean>) => {
-    const convertedData: Supplier = {
+    const convertedData: Code = {
       id: Number(item.id),
-      name: item["Name"] as string,
-      contact: item["Contact Number"] as string,
-      address: item["Address"] as string,
+      code: item["Kode"] as string,
       remarks: item["Remarks"] as string,
       is_active: 1,
     };
@@ -147,9 +124,12 @@ const CodePage = () => {
   useEffect(() => {
     if (selectedData) {
       fields.forEach((field) => {
+        const newValue = (selectedData[field.name as keyof Code] ??
+          "") as string;
+        console.log(`Mengisi ${field.name} dengan:`, newValue);
         setValue(
           field.name as Path<z.infer<typeof formSchema>>,
-          (selectedData[field.name as keyof Supplier] ?? "") as string
+          (selectedData[field.name as keyof Code] ?? "") as string
         );
       });
     }
@@ -173,12 +153,12 @@ const CodePage = () => {
       setLoading(true);
 
       try {
-        await SuppliersService.delete(item.id as number);
+        await CodesService.delete(item.id as number);
 
-        const res = await SuppliersService.getAll();
+        const res = await CodesService.getAll();
         setdata(res.data.data);
 
-        Swal.fire("Terhapus!", "Data supplier berhasil dihapus.", "success");
+        Swal.fire("Terhapus!", "Data Code berhasil dihapus.", "success");
       } catch (error) {
         Swal.fire("Gagal!", "Terjadi kesalahan saat menghapus data", "error");
         console.error("Delete error:", error);
@@ -189,16 +169,16 @@ const CodePage = () => {
   };
 
   return (
-    <main className="h-full flex flex-col bg-neutral-300">
+    <Layouts.Main>
       <Fragments.HeaderWithActions
-        title="Suppliers"
+        title="Codes"
         onFilter={() => {}}
         onAdd={handleModal}
       />
       {isOpen && (
         <Cores.Modal
           onClose={handleModal}
-          title={selectedData ? "Edit Supplier" : "Add Supplier"}
+          title={selectedData ? "Edit Code" : "Add Code"}
         >
           <Layouts.Form onSubmit={handleSubmit(handleSubmitForm)}>
             {fields.map((field) => (
@@ -209,8 +189,7 @@ const CodePage = () => {
                   control={control}
                   errors={errors}
                   defaultValue={
-                    selectedData?.[field.name as keyof Supplier]?.toString() ||
-                    ""
+                    selectedData?.[field.name as keyof Code]?.toString() || ""
                   }
                 />
               </div>
@@ -246,7 +225,7 @@ const CodePage = () => {
           </div>
         </div>
       </section>
-    </main>
+    </Layouts.Main>
   );
 };
 
