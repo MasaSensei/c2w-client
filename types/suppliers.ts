@@ -1,5 +1,5 @@
 export type Supplier = {
-  id: number;
+  id?: number;
   name: string;
   contact: string;
   address: string;

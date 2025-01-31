@@ -1,11 +1,13 @@
 import Button from "./Button";
 import Table from "./Table";
 import Modal from "./Modal";
-import InputFields from "./InputFields";
+import Input from "./Input";
+import Label from "./Label";
 
 export const Cores = {
   Button,
   Table,
   Modal,
-  InputFields,
+  Input,
+  Label,
 };
