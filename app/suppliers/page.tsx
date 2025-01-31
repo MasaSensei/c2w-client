@@ -3,24 +3,19 @@
 import { Cores } from "@/components/core";
 import { Fragments } from "@/components/fragments";
 import { Layouts } from "@/components/layouts";
-import axios from "axios";
-import { useEffect, useState } from "react";
-import { useForm, SubmitHandler, Path, FieldValues } from "react-hook-form"; // import useForm
+import { useEffect, useMemo, useState } from "react";
+import { useForm, SubmitHandler, Path } from "react-hook-form";
 import { Supplier } from "@/types/suppliers";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-
-interface Field<T extends FieldValues> {
-  name: Path<T>;
-  label: string;
-  type: "text" | "number";
-  placeholder: string;
-}
+import Swal from "sweetalert2";
+import { SuppliersService } from "@/services/suppliers.service";
+import { ClipLoader } from "react-spinners";
 
 const formSchema = z.object({
-  name: z.string(),
-  contact: z.string(),
-  address: z.string(),
+  name: z.string().min(1, { message: "Name is required" }),
+  contact: z.string().min(1, { message: "Contact Number is required" }),
+  address: z.string().min(1, { message: "Address is required" }),
   remarks: z.string(),
 });
 
@@ -28,13 +23,15 @@ const SuppliersPage = () => {
   const [data, setdata] = useState<Supplier[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedData, setSelectedData] = useState<Supplier | null>(null);
+  const [loading, setLoading] = useState(false);
   const headers = ["Name", "Contact Number", "Address", "Remarks"];
 
   useEffect(() => {
-    const response = axios.get(`${process.env.NEXT_PUBLIC_API_URL}/suppliers`);
-    response.then((res) => {
-      setdata(res.data.data);
-    });
+    SuppliersService.getAll()
+      .then((res) => {
+        setdata(res.data.data);
+      })
+      .catch((err) => console.error("Error fetching suppliers:", err));
   }, []);
 
   const {
@@ -53,42 +50,48 @@ const SuppliersPage = () => {
     },
   });
 
-  const fields: Field<z.infer<typeof formSchema>>[] = [
-    { name: "name", label: "Name", type: "text", placeholder: "Name" },
-    {
-      name: "contact",
-      label: "Contact Number",
-      type: "number",
-      placeholder: "Contact Number",
-    },
-    { name: "address", label: "Address", type: "text", placeholder: "Address" },
-    { name: "remarks", label: "Remarks", type: "text", placeholder: "Remarks" },
-  ];
+  const fields = useMemo(
+    () => [
+      {
+        name: "name",
+        label: "Name",
+        type: "text",
+        placeholder: "Name",
+        required: true,
+      },
+      {
+        name: "contact",
+        label: "Contact Number",
+        type: "number",
+        placeholder: "Contact Number",
+        required: true,
+      },
+      {
+        name: "address",
+        label: "Address",
+        type: "text",
+        placeholder: "Address",
+        required: true,
+      },
+      {
+        name: "remarks",
+        label: "Remarks",
+        type: "text",
+        placeholder: "Remarks",
+      },
+    ],
+    []
+  );
 
   const formatData = (data: Supplier[]) => {
-    if (!Array.isArray(data)) return [];
-
-    return data.map((item) => {
-      return headers.reduce((acc, header) => {
-        if (header === "Id") {
-          acc[header] = item.id ? String(item.id) : "-";
-        }
-        if (header === "Name") {
-          acc[header] = item.name ? String(item.name) : "-";
-        } else if (header === "Contact Number") {
-          acc[header] = item.contact ? String(item.contact) : "-";
-        } else if (header === "Address") {
-          acc[header] = item.address ? String(item.address) : "-";
-        } else if (header === "Remarks") {
-          acc[header] = item.remarks ? String(item.remarks) : "-";
-        }
-
-        return acc;
-      }, {} as Record<string, string>);
-    });
+    return data.map((item) => ({
+      Name: item.name || "-",
+      "Contact Number": item.contact || "-",
+      Address: item.address || "-",
+      Remarks: item.remarks || "-",
+      id: item.id?.toString() || "-",
+    }));
   };
-
-  const formattedData = formatData(data);
 
   const handleModal = () => {
     setIsOpen(!isOpen);
@@ -98,46 +101,28 @@ const SuppliersPage = () => {
   const handleSubmitForm: SubmitHandler<Supplier> = async (formData) => {
     try {
       if (selectedData) {
-        // Mode Edit (Gunakan PUT)
-        const response = await axios.put(
-          `${process.env.NEXT_PUBLIC_API_URL}/suppliers/${selectedData["id"]}`,
+        const response = await SuppliersService.update(
+          selectedData.id as number,
           {
             ...formData,
             is_active: 1,
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
           }
         );
 
-        // Perbarui data di state tanpa menambah baru
         setdata((prevData) =>
           prevData.map((item) =>
             item.id === selectedData.id ? response.data.data : item
           )
         );
       } else {
-        // Mode Tambah (Gunakan POST)
-        const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/suppliers`,
-          {
-            ...formData,
-            is_active: 1,
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const response = await SuppliersService.create({
+          ...formData,
+          is_active: 1,
+        });
 
-        // Tambahkan data baru ke state
         setdata((prevData) => [...prevData, response.data.data]);
       }
 
-      // Tutup modal dan reset selectedData
       setIsOpen(false);
       setSelectedData(null);
     } catch (error) {
@@ -147,7 +132,7 @@ const SuppliersPage = () => {
 
   const handleEdit = (item: Record<string, string | number | boolean>) => {
     const convertedData: Supplier = {
-      id: item.id as number,
+      id: Number(item.id),
       name: item["Name"] as string,
       contact: item["Contact Number"] as string,
       address: item["Address"] as string,
@@ -155,22 +140,53 @@ const SuppliersPage = () => {
       is_active: 1,
     };
 
-    console.log("Editing supplier data:", convertedData); // Log data yang dipilih
     setSelectedData(convertedData);
     setIsOpen(true);
   };
 
   useEffect(() => {
     if (selectedData) {
-      console.log("Selected data to populate form:", selectedData); // Log data yang akan di-set
       fields.forEach((field) => {
         setValue(
           field.name as Path<z.infer<typeof formSchema>>,
-          (selectedData[field.name as keyof Supplier] ?? "") as string // Pastikan selalu string
+          (selectedData[field.name as keyof Supplier] ?? "") as string
         );
       });
     }
-  }, [selectedData, setValue]);
+  }, [selectedData, setValue, fields]);
+
+  const handleDelete = async (
+    item: Record<string, string | number | boolean>
+  ) => {
+    const result = await Swal.fire({
+      title: "Yakin ingin menghapus?",
+      text: "Data yang dihapus tidak bisa dikembalikan!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Ya, Hapus!",
+      cancelButtonText: "Batal",
+    });
+
+    if (result.isConfirmed) {
+      setLoading(true);
+
+      try {
+        await SuppliersService.delete(item.id as number);
+
+        const res = await SuppliersService.getAll();
+        setdata(res.data.data);
+
+        Swal.fire("Terhapus!", "Data supplier berhasil dihapus.", "success");
+      } catch (error) {
+        Swal.fire("Gagal!", "Terjadi kesalahan saat menghapus data", "error");
+        console.error("Delete error:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
 
   return (
     <main className="h-full flex flex-col bg-neutral-300">
@@ -220,10 +236,12 @@ const SuppliersPage = () => {
       <section className="flex-1 p-4">
         <div className="bg-white border boder-gray-200 rounded-lg w-full relative">
           <div className="w-fit min-w-full sm:flex sm:justify-center">
+            {loading && <ClipLoader color="black" />}
             <Cores.Table
               onEdit={handleEdit}
               headers={headers}
-              data={formattedData}
+              data={formatData(data)}
+              onDelete={handleDelete}
             />
           </div>
         </div>
