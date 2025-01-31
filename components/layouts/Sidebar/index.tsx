@@ -112,6 +112,11 @@ const Sidebar = () => {
                       Kode
                     </Cores.Button>
                   </li>
+                  <li className="mb-2">
+                    <Cores.Button type="submenuChild" to="/color">
+                      Color
+                    </Cores.Button>
+                  </li>
                 </>
               }
             >
