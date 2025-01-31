@@ -122,6 +122,16 @@ const Sidebar = () => {
                       Model
                     </Cores.Button>
                   </li>
+                  <li className="mb-2">
+                    <Cores.Button type="submenuChild" to="/size">
+                      Size
+                    </Cores.Button>
+                  </li>
+                  <li className="mb-2">
+                    <Cores.Button type="submenuChild" to="/category">
+                      Bahan Kategori
+                    </Cores.Button>
+                  </li>
                 </>
               }
             >

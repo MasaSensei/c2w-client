@@ -5,31 +5,31 @@ import { Fragments } from "@/components/fragments";
 import { Layouts } from "@/components/layouts";
 import { useEffect, useMemo, useState } from "react";
 import { useForm, SubmitHandler, Path } from "react-hook-form";
-import { Model } from "@/types/models";
+import { Category } from "@/types/category";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Swal from "sweetalert2";
-import { ModelsService } from "@/services/models.service";
+import { CategoriesService } from "@/services/categories.service";
 import { ClipLoader } from "react-spinners";
 
 const formSchema = z.object({
-  model: z.string().min(1, { message: "model is required" }),
+  category: z.string().min(1, { message: "category is required" }),
   remarks: z.string(),
 });
 
 const ColorPage = () => {
-  const [data, setdata] = useState<Model[]>([]);
+  const [data, setdata] = useState<Category[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedData, setSelectedData] = useState<Model | null>(null);
+  const [selectedData, setSelectedData] = useState<Category | null>(null);
   const [loading, setLoading] = useState(false);
-  const headers = ["Model", "Remarks"];
+  const headers = ["Bahan Kategori", "Remarks"];
 
   useEffect(() => {
-    ModelsService.getAll()
+    CategoriesService.getAll()
       .then((res) => {
         setdata(res.data.data);
       })
-      .catch((err) => console.error("Error fetching model:", err));
+      .catch((err) => console.error("Error fetching data:", err));
   }, []);
 
   const {
@@ -41,7 +41,7 @@ const ColorPage = () => {
     resolver: zodResolver(formSchema),
     shouldUnregister: false,
     defaultValues: {
-      model: "",
+      category: "",
       remarks: "",
     },
   });
@@ -49,10 +49,10 @@ const ColorPage = () => {
   const fields = useMemo(
     () => [
       {
-        name: "model",
-        label: "Model",
+        name: "category",
+        label: "Bahan Kategori",
         type: "text",
-        placeholder: "Model",
+        placeholder: "category",
         required: true,
       },
       {
@@ -65,9 +65,9 @@ const ColorPage = () => {
     []
   );
 
-  const formatData = (data: Model[]) => {
+  const formatData = (data: Category[]) => {
     return data.map((item) => ({
-      Model: item.model || "-",
+      "Bahan Kategori": item.category || "-",
       Remarks: item.remarks || "-",
       id: item.id?.toString() || "-",
     }));
@@ -78,13 +78,16 @@ const ColorPage = () => {
     setSelectedData(null);
   };
 
-  const handleSubmitForm: SubmitHandler<Model> = async (formData) => {
+  const handleSubmitForm: SubmitHandler<Category> = async (formData) => {
     try {
       if (selectedData) {
-        const response = await ModelsService.update(selectedData.id as number, {
-          ...formData,
-          is_active: 1,
-        });
+        const response = await CategoriesService.update(
+          selectedData.id as number,
+          {
+            ...formData,
+            is_active: 1,
+          }
+        );
 
         setdata((prevData) =>
           prevData.map((item) =>
@@ -92,7 +95,7 @@ const ColorPage = () => {
           )
         );
       } else {
-        const response = await ModelsService.create({
+        const response = await CategoriesService.create({
           ...formData,
           is_active: 1,
         });
@@ -108,9 +111,9 @@ const ColorPage = () => {
   };
 
   const handleEdit = (item: Record<string, string | number | boolean>) => {
-    const convertedData: Model = {
+    const convertedData: Category = {
       id: Number(item.id),
-      model: item["Model"] as string,
+      category: item["Bahan Kategori"] as string,
       remarks: item["Remarks"] as string,
       is_active: 1,
     };
@@ -124,7 +127,7 @@ const ColorPage = () => {
       fields.forEach((field) => {
         setValue(
           field.name as Path<z.infer<typeof formSchema>>,
-          (selectedData[field.name as keyof Model] ?? "") as string
+          (selectedData[field.name as keyof Category] ?? "") as string
         );
       });
     }
@@ -148,9 +151,9 @@ const ColorPage = () => {
       setLoading(true);
 
       try {
-        await ModelsService.delete(item.id as number);
+        await CategoriesService.delete(item.id as number);
 
-        const res = await ModelsService.getAll();
+        const res = await CategoriesService.getAll();
         setdata(res.data.data);
 
         Swal.fire("Terhapus!", "Data color berhasil dihapus.", "success");
@@ -173,7 +176,7 @@ const ColorPage = () => {
       {isOpen && (
         <Cores.Modal
           onClose={handleModal}
-          title={selectedData ? "Edit Size" : "Add Size"}
+          title={selectedData ? "Edit Bahan Kategori" : "Add Bahan Kategori"}
         >
           <Layouts.Form onSubmit={handleSubmit(handleSubmitForm)}>
             {fields.map((field) => (
@@ -184,7 +187,8 @@ const ColorPage = () => {
                   control={control}
                   errors={errors}
                   defaultValue={
-                    selectedData?.[field.name as keyof Model]?.toString() || ""
+                    selectedData?.[field.name as keyof Category]?.toString() ||
+                    ""
                   }
                 />
               </div>

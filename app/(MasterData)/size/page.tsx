@@ -5,31 +5,31 @@ import { Fragments } from "@/components/fragments";
 import { Layouts } from "@/components/layouts";
 import { useEffect, useMemo, useState } from "react";
 import { useForm, SubmitHandler, Path } from "react-hook-form";
-import { Model } from "@/types/models";
+import { Size } from "@/types/size";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Swal from "sweetalert2";
-import { ModelsService } from "@/services/models.service";
+import { SizesService } from "@/services/sizes.service";
 import { ClipLoader } from "react-spinners";
 
 const formSchema = z.object({
-  model: z.string().min(1, { message: "model is required" }),
+  size: z.string().min(1, { message: "Size is required" }),
   remarks: z.string(),
 });
 
 const ColorPage = () => {
-  const [data, setdata] = useState<Model[]>([]);
+  const [data, setdata] = useState<Size[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedData, setSelectedData] = useState<Model | null>(null);
+  const [selectedData, setSelectedData] = useState<Size | null>(null);
   const [loading, setLoading] = useState(false);
-  const headers = ["Model", "Remarks"];
+  const headers = ["Size", "Remarks"];
 
   useEffect(() => {
-    ModelsService.getAll()
+    SizesService.getAll()
       .then((res) => {
         setdata(res.data.data);
       })
-      .catch((err) => console.error("Error fetching model:", err));
+      .catch((err) => console.error("Error fetching Size:", err));
   }, []);
 
   const {
@@ -41,7 +41,7 @@ const ColorPage = () => {
     resolver: zodResolver(formSchema),
     shouldUnregister: false,
     defaultValues: {
-      model: "",
+      size: "",
       remarks: "",
     },
   });
@@ -49,10 +49,10 @@ const ColorPage = () => {
   const fields = useMemo(
     () => [
       {
-        name: "model",
-        label: "Model",
+        name: "size",
+        label: "Size",
         type: "text",
-        placeholder: "Model",
+        placeholder: "Size",
         required: true,
       },
       {
@@ -65,9 +65,9 @@ const ColorPage = () => {
     []
   );
 
-  const formatData = (data: Model[]) => {
+  const formatData = (data: Size[]) => {
     return data.map((item) => ({
-      Model: item.model || "-",
+      Size: item.size || "-",
       Remarks: item.remarks || "-",
       id: item.id?.toString() || "-",
     }));
@@ -78,10 +78,10 @@ const ColorPage = () => {
     setSelectedData(null);
   };
 
-  const handleSubmitForm: SubmitHandler<Model> = async (formData) => {
+  const handleSubmitForm: SubmitHandler<Size> = async (formData) => {
     try {
       if (selectedData) {
-        const response = await ModelsService.update(selectedData.id as number, {
+        const response = await SizesService.update(selectedData.id as number, {
           ...formData,
           is_active: 1,
         });
@@ -92,7 +92,7 @@ const ColorPage = () => {
           )
         );
       } else {
-        const response = await ModelsService.create({
+        const response = await SizesService.create({
           ...formData,
           is_active: 1,
         });
@@ -108,9 +108,9 @@ const ColorPage = () => {
   };
 
   const handleEdit = (item: Record<string, string | number | boolean>) => {
-    const convertedData: Model = {
+    const convertedData: Size = {
       id: Number(item.id),
-      model: item["Model"] as string,
+      size: item["Size"] as string,
       remarks: item["Remarks"] as string,
       is_active: 1,
     };
@@ -124,7 +124,7 @@ const ColorPage = () => {
       fields.forEach((field) => {
         setValue(
           field.name as Path<z.infer<typeof formSchema>>,
-          (selectedData[field.name as keyof Model] ?? "") as string
+          (selectedData[field.name as keyof Size] ?? "") as string
         );
       });
     }
@@ -148,9 +148,9 @@ const ColorPage = () => {
       setLoading(true);
 
       try {
-        await ModelsService.delete(item.id as number);
+        await SizesService.delete(item.id as number);
 
-        const res = await ModelsService.getAll();
+        const res = await SizesService.getAll();
         setdata(res.data.data);
 
         Swal.fire("Terhapus!", "Data color berhasil dihapus.", "success");
@@ -184,7 +184,7 @@ const ColorPage = () => {
                   control={control}
                   errors={errors}
                   defaultValue={
-                    selectedData?.[field.name as keyof Model]?.toString() || ""
+                    selectedData?.[field.name as keyof Size]?.toString() || ""
                   }
                 />
               </div>
