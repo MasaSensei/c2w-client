@@ -117,6 +117,11 @@ const Sidebar = () => {
                       Color
                     </Cores.Button>
                   </li>
+                  <li className="mb-2">
+                    <Cores.Button type="submenuChild" to="/models">
+                      Model
+                    </Cores.Button>
+                  </li>
                 </>
               }
             >
