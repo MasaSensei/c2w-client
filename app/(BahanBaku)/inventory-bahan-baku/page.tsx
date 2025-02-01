@@ -15,6 +15,7 @@ import { Color } from "@/types/colors";
 import { Code } from "@/types/codes";
 import { ColorsService } from "@/services/colors.service";
 import { CodesService } from "@/services/codes.service";
+import Stock from "./stock";
 
 const formSchema = z.object({
   code: z.string().min(1, { message: "Code is required" }),
@@ -28,6 +29,7 @@ const InventoryBahanBaku = () => {
   const [color, setColor] = useState<Color[]>([]);
   const [code, setCode] = useState<Code[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [isStock, setIsStock] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedData, setSelectedData] = useState<BahanBaku | null>(null);
   const headers = [
@@ -142,6 +144,10 @@ const InventoryBahanBaku = () => {
     reset();
   };
 
+  const handleStock = () => {
+    setIsStock(!isStock);
+  };
+
   const handleSubmitForm: SubmitHandler<z.infer<typeof formSchema>> = async (
     formData
   ) => {
@@ -185,6 +191,7 @@ const InventoryBahanBaku = () => {
           )
         );
         setIsLoading(false);
+        window.location.reload();
       } else {
         const response = await BahanBakuService.create(payload);
         setData((prevData) => [...prevData, response.data.data]);
@@ -218,9 +225,12 @@ const InventoryBahanBaku = () => {
       <Fragments.HeaderWithActions
         title="Inventory Bahan Baku"
         onAdd={handleModal}
+        stock
+        onStock={handleStock}
       />
 
-      {/* Modal Form */}
+      {isStock && <Stock />}
+
       {isOpen && (
         <Cores.Modal
           title={selectedData ? "Edit Bahan Baku" : "Tambah Bahan Baku"}

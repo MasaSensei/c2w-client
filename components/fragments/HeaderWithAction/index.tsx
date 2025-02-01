@@ -4,12 +4,16 @@ interface HeaderWithActionsProps {
   title: string;
   onFilter?: () => void;
   onAdd?: () => void;
+  stock?: boolean;
+  onStock?: () => void;
 }
 
 const HeaderWithActions: React.FC<HeaderWithActionsProps> = ({
   title,
   onFilter,
   onAdd,
+  stock,
+  onStock,
 }) => {
   return (
     <div className="bg-white border-b p-4 flex items-center justify-between">
@@ -35,6 +39,28 @@ const HeaderWithActions: React.FC<HeaderWithActionsProps> = ({
         >
           Filter
         </Cores.Button>
+        {stock && (
+          <Cores.Button
+            type="add"
+            className="bg-orange-500 hover:bg-orange-600"
+            icon={
+              <svg
+                stroke="currentColor"
+                fill="currentColor"
+                strokeWidth="0"
+                viewBox="0 0 512 512"
+                height="14"
+                width="14"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M416 277.333H277.333V416h-42.666V277.333H96v-42.666h138.667V96h42.666v138.667H416v42.666z"></path>
+              </svg>
+            }
+            onClick={onStock}
+          >
+            Stock
+          </Cores.Button>
+        )}
         <Cores.Button
           type="add"
           icon={
