@@ -42,21 +42,30 @@ const InventoryBahanBaku = () => {
     "Remarks",
   ];
 
-  // Fetch initial data
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        const [bahanBakuRes, colorsRes, codesRes] = await Promise.all([
-          BahanBakuService.getAll(),
-          ColorsService.getAll(),
-          CodesService.getAll(),
-        ]);
-
+        const bahanBakuRes = await BahanBakuService.getAll();
         setData(bahanBakuRes.data.data);
+      } catch (err) {
+        console.error("Error fetching Bahan Baku:", err);
+        setData([]); // Tetap set state kosong agar tidak error di render
+      }
+
+      try {
+        const colorsRes = await ColorsService.getAll();
         setColor(colorsRes.data.data);
+      } catch (err) {
+        console.error("Error fetching Colors:", err);
+        setColor([]); // Tetap set state kosong agar tidak error di render
+      }
+
+      try {
+        const codesRes = await CodesService.getAll();
         setCode(codesRes.data.data);
       } catch (err) {
-        console.error("Error fetching initial data:", err);
+        console.error("Error fetching Codes:", err);
+        setCode([]); // Tetap set state kosong agar tidak error di render
       }
     };
 
@@ -161,8 +170,8 @@ const InventoryBahanBaku = () => {
         is_active: 1,
         id: selectedData?.id || 0,
         total_roll: selectedData?.total_roll || 0,
-        total_yard: selectedData?.total_yard || "",
-        cost_per_yard: selectedData?.cost_per_yard || "",
+        total_yard: selectedData?.total_yard || 0,
+        cost_per_yard: selectedData?.cost_per_yard || 0,
         code: {
           id: selectedData?.code?.id || 0, // Jika code sudah ada, ambil id-nya, jika tidak set default
           code: formData.code || "", // Gunakan nilai code yang ada dari formData
@@ -191,16 +200,18 @@ const InventoryBahanBaku = () => {
           )
         );
         setIsLoading(false);
-        window.location.reload();
       } else {
         const response = await BahanBakuService.create(payload);
         setData((prevData) => [...prevData, response.data.data]);
       }
 
       handleModal();
+      window.location.reload();
     } catch (error) {
       Swal.fire("Error!", "Gagal menyimpan data", "error");
       console.error("Error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -218,6 +229,39 @@ const InventoryBahanBaku = () => {
 
     setSelectedData(fullData);
     setIsOpen(true);
+  };
+
+  const handleDelete = async (
+    item: Record<string, string | number | boolean>
+  ) => {
+    const result = await Swal.fire({
+      title: "Yakin ingin menghapus?",
+      text: "Data yang dihapus tidak bisa dikembalikan!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Ya, Hapus!",
+      cancelButtonText: "Batal",
+    });
+
+    if (result.isConfirmed) {
+      setIsLoading(true);
+
+      try {
+        await BahanBakuService.delete(item.id as number);
+
+        const res = await BahanBakuService.getAll();
+        setData(res.data.data);
+
+        Swal.fire("Terhapus!", "Data color berhasil dihapus.", "success");
+      } catch (error) {
+        Swal.fire("Gagal!", "Terjadi kesalahan saat menghapus data", "error");
+        console.error("Delete error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
   };
 
   return (
@@ -306,7 +350,7 @@ const InventoryBahanBaku = () => {
               headers={headers}
               data={formatData(data)}
               onEdit={handleEdit}
-              onDelete={() => {}}
+              onDelete={handleDelete}
             />
           )}
         </div>

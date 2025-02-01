@@ -20,7 +20,8 @@ interface ControllerInputProps<T extends FieldValues> {
   defaultValue?: PathValue<T, Path<T>>;
   options?: Option[];
   onClose?: () => void;
-  disabled?: boolean;
+  readonly?: boolean;
+  currency?: boolean;
 }
 
 interface Option {
@@ -40,13 +41,22 @@ const ControllerInput = <T extends FieldValues>(
     errors,
     defaultValue,
     options,
-    disabled,
+    readonly,
+    currency,
   } = props;
   const [categories, setCategories] = useState<string[]>([""]);
 
   const handleAddCategory = () => setCategories([...categories, ""]);
   const handleRemoveCategory = (index: number) =>
     setCategories(categories.filter((_, i) => i !== index));
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(value);
+  };
 
   return (
     <div className="text-start">
@@ -115,8 +125,19 @@ const ControllerInput = <T extends FieldValues>(
                   placeholder={placeholder}
                   type={type}
                   defaultValue={defaultValue}
-                  min={type === "date" ? "1" : undefined}
-                  disabled={disabled || false}
+                  min={type === "number" ? "0" : undefined}
+                  readOnly={readonly || false}
+                  value={currency ? formatCurrency(field.value) : field.value}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    let rawValue = e.target.value;
+
+                    // Jika currency aktif, hapus karakter selain angka dan format ulang
+                    if (currency) {
+                      rawValue = rawValue.replace(/\D/g, ""); // Hanya angka
+                    }
+
+                    field.onChange(currency ? Number(rawValue) : rawValue);
+                  }}
                 />
               )}
             </>

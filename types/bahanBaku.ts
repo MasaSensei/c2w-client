@@ -17,8 +17,8 @@ export type BahanBaku = {
   id_color: number;
   item: string;
   total_roll?: number;
-  total_yard?: string;
-  cost_per_yard?: string;
+  total_yard?: number;
+  cost_per_yard?: number;
   remarks: string;
   is_active: number;
   code: Code;
