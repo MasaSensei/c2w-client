@@ -8,6 +8,7 @@ import {
   PathValue,
 } from "react-hook-form";
 import { useState } from "react";
+import { SelectItem } from "@/components/ui/select";
 
 interface ControllerInputProps<T extends FieldValues> {
   name: Path<T>;
@@ -29,8 +30,16 @@ interface Option {
 const ControllerInput = <T extends FieldValues>(
   props: ControllerInputProps<T>
 ) => {
-  const { name, placeholder, type, label, control, errors, defaultValue } =
-    props;
+  const {
+    name,
+    placeholder,
+    type,
+    label,
+    control,
+    errors,
+    defaultValue,
+    options,
+  } = props;
   const [categories, setCategories] = useState<string[]>([""]);
 
   const handleAddCategory = () => setCategories([...categories, ""]);
@@ -48,13 +57,18 @@ const ControllerInput = <T extends FieldValues>(
                 name={name}
                 control={control}
                 defaultValue={defaultValue}
-                render={({ field }) => (
-                  <Cores.Input
-                    {...field}
+                render={({ field }: { field: FieldValues }) => (
+                  <Cores.Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
                     placeholder={placeholder}
-                    type={type}
-                    defaultValue={defaultValue}
-                  />
+                  >
+                    {options?.map((item: Option) => (
+                      <SelectItem key={item.value} value={item.value}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </Cores.Select>
                 )}
               />
               <button
@@ -79,13 +93,29 @@ const ControllerInput = <T extends FieldValues>(
           name={name}
           control={control}
           defaultValue={defaultValue}
-          render={({ field }) => (
-            <Cores.Input
-              {...field}
-              placeholder={placeholder}
-              type={type}
-              defaultValue={defaultValue}
-            />
+          render={({ field }: { field: FieldValues }) => (
+            <>
+              {type === "select" && options ? (
+                <Cores.Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  placeholder={placeholder}
+                >
+                  {options?.map((item: Option) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </Cores.Select>
+              ) : (
+                <Cores.Input
+                  {...field}
+                  placeholder={placeholder}
+                  type={type}
+                  defaultValue={defaultValue}
+                />
+              )}
+            </>
           )}
         />
       )}

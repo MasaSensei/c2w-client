@@ -11,54 +11,68 @@ import Swal from "sweetalert2";
 import { ClipLoader } from "react-spinners";
 import { BahanBaku } from "@/types/bahanBaku";
 import { BahanBakuService } from "@/services/bahanBaku.service";
+import { Color } from "@/types/colors";
+import { Code } from "@/types/codes";
+import { ColorsService } from "@/services/colors.service";
+import { CodesService } from "@/services/codes.service";
 
 const formSchema = z.object({
   code: z.string().min(1, { message: "Code is required" }),
   color: z.string().min(1, { message: "Color is required" }),
-  category: z.string().min(1, { message: "Category is required" }),
-  total_roll: z.string().min(1, { message: "Total Roll is required" }),
-  total_yard: z.string().min(1, { message: "Total Yard is required" }),
-  cost_per_yard: z.string().min(1, { message: "Cost per Yard is required" }),
+  item: z.string().min(1, { message: "Item is required" }),
   remarks: z.string(),
 });
 
 const InventoryBahanBaku = () => {
   const [data, setData] = useState<BahanBaku[]>([]);
+  const [color, setColor] = useState<Color[]>([]);
+  const [code, setCode] = useState<Code[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedData, setSelectedData] = useState<BahanBaku | null>(null);
   const headers = [
     "Code",
     "Color",
-    "Category",
+    "Item",
     "Total Roll",
     "Total Yard",
     "Cost per Yard",
     "Remarks",
   ];
 
+  // Fetch initial data
   useEffect(() => {
-    BahanBakuService.getAll()
-      .then((res) => {
-        setData(res.data.data);
-      })
-      .catch((err) => console.error("Error fetching bahan baku:", err));
+    const fetchAllData = async () => {
+      try {
+        const [bahanBakuRes, colorsRes, codesRes] = await Promise.all([
+          BahanBakuService.getAll(),
+          ColorsService.getAll(),
+          CodesService.getAll(),
+        ]);
+
+        setData(bahanBakuRes.data.data);
+        setColor(colorsRes.data.data);
+        setCode(codesRes.data.data);
+      } catch (err) {
+        console.error("Error fetching initial data:", err);
+      }
+    };
+
+    fetchAllData();
   }, []);
 
   const {
     control,
     handleSubmit,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    shouldUnregister: false,
     defaultValues: {
       code: "",
       color: "",
-      category: "",
-      total_roll: "",
-      total_yard: "",
-      cost_per_yard: "",
+      item: "",
       remarks: "",
     },
   });
@@ -68,32 +82,37 @@ const InventoryBahanBaku = () => {
       {
         name: "code",
         label: "Code",
-        type: "text",
-        placeholder: "Code",
-        required: true,
+        type: "select",
+        placeholder: "Pilih Code",
+        options: code.map((c) => ({
+          value: c?.id?.toString() || "",
+          label: c.code,
+        })),
       },
       {
         name: "color",
         label: "Color",
-        type: "text",
-        placeholder: "color",
-        required: true,
+        type: "select",
+        placeholder: "Pilih Color",
+        options: color.map((c) => ({
+          value: c?.id?.toString() || "",
+          label: c.color,
+        })),
       },
       {
-        name: "category",
-        label: "Category",
+        name: "item",
+        label: "Item",
         type: "text",
-        placeholder: "Category",
-        required: true,
+        placeholder: "Masukkan Item",
       },
       {
         name: "remarks",
         label: "Remarks",
         type: "text",
-        placeholder: "Remarks",
+        placeholder: "Masukkan Remarks",
       },
     ],
-    []
+    [code, color]
   );
 
   const formatRupiah = (value: number | string) => {
@@ -106,9 +125,10 @@ const InventoryBahanBaku = () => {
 
   const formatData = (data: BahanBaku[]) => {
     return data.map((item) => ({
+      id: item.id?.toString() || "-",
       Code: item?.code?.code || "-",
-      Color: item.color.color || "-",
-      Category: item.category.map((cat) => cat.category).join(", ") || "-",
+      Color: item?.color?.color || item?.id_color?.toString() || "-",
+      Item: item.item || "-",
       "Total Roll": item.total_roll || 0,
       "Total Yard": item.total_yard || 0,
       "Cost per Yard": formatRupiah(item.cost_per_yard || 0),
@@ -119,82 +139,166 @@ const InventoryBahanBaku = () => {
   const handleModal = () => {
     setIsOpen(!isOpen);
     setSelectedData(null);
+    reset();
   };
 
-  const handleSubmitForm: SubmitHandler<BahanBaku> = async (formData) => {
-    console.log(formData);
+  const handleSubmitForm: SubmitHandler<z.infer<typeof formSchema>> = async (
+    formData
+  ) => {
+    setIsLoading(true);
+    try {
+      const payload = {
+        id_code: Number(formData.code),
+        id_color: Number(formData.color),
+        item: formData.item,
+        remarks: formData.remarks,
+        is_active: 1,
+        id: selectedData?.id || 0,
+        total_roll: selectedData?.total_roll || 0,
+        total_yard: selectedData?.total_yard || "",
+        cost_per_yard: selectedData?.cost_per_yard || "",
+        code: {
+          id: selectedData?.code?.id || 0, // Jika code sudah ada, ambil id-nya, jika tidak set default
+          code: formData.code || "", // Gunakan nilai code yang ada dari formData
+          remarks: formData.remarks || "", // Jika remarks diperlukan untuk code, berikan nilai default
+          is_active: 1, // Jika perlu, berikan nilai aktif default
+        },
+        color: {
+          id: selectedData?.color?.id || 0, // Jika color sudah ada, ambil id-nya, jika tidak set default
+          color: formData.color || "", // Gunakan nilai color yang ada dari formData
+          remarks: formData.remarks || "", // Jika remarks diperlukan untuk color, berikan nilai default
+          is_active: 1,
+        },
+      };
+
+      if (selectedData) {
+        const response = await BahanBakuService.update(
+          selectedData.id,
+          payload
+        );
+
+        setData((prevData) =>
+          prevData.map((item) =>
+            item.id === selectedData.id
+              ? { ...item, ...response.data.data }
+              : item
+          )
+        );
+        setIsLoading(false);
+      } else {
+        const response = await BahanBakuService.create(payload);
+        setData((prevData) => [...prevData, response.data.data]);
+      }
+
+      handleModal();
+    } catch (error) {
+      Swal.fire("Error!", "Gagal menyimpan data", "error");
+      console.error("Error:", error);
+    }
+  };
+
+  const handleEdit = (item: Record<string, string | number | boolean>) => {
+    const fullData = data.find((d) => d.id?.toString() === item.id);
+    if (!fullData) {
+      console.log("Data tidak ditemukan");
+      return;
+    }
+
+    setValue("code", fullData.id_code?.toString() || "");
+    setValue("color", fullData.id_color?.toString() || "");
+    setValue("item", fullData.item || "");
+    setValue("remarks", fullData.remarks || "");
+
+    setSelectedData(fullData);
+    setIsOpen(true);
   };
 
   return (
     <Layouts.Main>
       <Fragments.HeaderWithActions
         title="Inventory Bahan Baku"
-        onFilter={() => {}}
         onAdd={handleModal}
       />
-      {isOpen && (
-        <Cores.Modal title="Tambah Bahan Baku" onClose={handleModal}>
-          <Layouts.Form onSubmit={handleSubmit(handleSubmitForm)}>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                {fields
-                  .filter(
-                    (field) => field.name === "code" || field.name === "color"
-                  )
-                  .map((field) => (
-                    <div key={field.name}>
-                      <Fragments.ControllerInput
-                        {...field}
-                        name={field.name as Path<z.infer<typeof formSchema>>}
-                        control={control}
-                        errors={errors}
-                      />
-                    </div>
-                  ))}
-              </div>
 
-              {fields.some((field) => field.name === "category") && (
-                <div className="pb-4 col-span-1">
+      {/* Modal Form */}
+      {isOpen && (
+        <Cores.Modal
+          title={selectedData ? "Edit Bahan Baku" : "Tambah Bahan Baku"}
+          onClose={handleModal}
+          key={selectedData?.id || "new"}
+        >
+          <Layouts.Form onSubmit={handleSubmit(handleSubmitForm)}>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Select Fields */}
+              {fields.slice(0, 2).map((field) => (
+                <div key={field.name}>
                   <Fragments.ControllerInput
-                    name="category"
-                    label="Categories"
-                    type="category"
-                    placeholder="Add Category"
+                    {...field}
+                    defaultValue={
+                      selectedData?.[
+                        field.name as keyof BahanBaku
+                      ]?.toString() || ""
+                    }
+                    name={field.name as Path<z.infer<typeof formSchema>>}
                     control={control}
+                    errors={errors}
+                    options={field.options}
+                  />
+                </div>
+              ))}
+
+              {/* Text Fields */}
+              {fields.slice(2).map((field) => (
+                <div key={field.name} className="col-span-2">
+                  <Fragments.ControllerInput
+                    {...field}
+                    control={control}
+                    name={field.name as Path<z.infer<typeof formSchema>>}
+                    defaultValue={
+                      selectedData?.[
+                        field.name as keyof BahanBaku
+                      ]?.toString() || ""
+                    }
                     errors={errors}
                   />
                 </div>
-              )}
+              ))}
+            </div>
 
-              {fields
-                .filter((field) => field.name === "remarks")
-                .map((field) => (
-                  <div key={field.name} className="mb-4">
-                    <Fragments.ControllerInput
-                      {...field}
-                      name={field.name as Path<z.infer<typeof formSchema>>}
-                      control={control}
-                      errors={errors}
-                      defaultValue={selectedData?.remarks}
-                    />
-                  </div>
-                ))}
+            <div className="flex justify-end gap-4 mt-6">
+              <button
+                type="button"
+                onClick={handleModal}
+                className="px-4 py-2 text-sm bg-gray-200 rounded hover:bg-gray-300"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"
+              >
+                {isLoading ? <ClipLoader size={20} color="#fff" /> : "Simpan"}
+              </button>
             </div>
           </Layouts.Form>
         </Cores.Modal>
       )}
 
+      {/* Table */}
       <section className="flex-1 p-4">
-        <div className="bg-white border boder-gray-200 rounded-lg w-full relative">
-          <div className="w-fit min-w-full sm:flex sm:justify-center">
-            {/* {loading && <ClipLoader color="black" />} */}
+        <div className="bg-white rounded-lg border border-gray-200">
+          {isLoading ? (
+            <div className="flex justify-center items-center py-20">
+              <ClipLoader size={50} color="#007bff" />
+            </div>
+          ) : (
             <Cores.Table
-              onEdit={() => {}}
               headers={headers}
               data={formatData(data)}
+              onEdit={handleEdit}
               onDelete={() => {}}
             />
-          </div>
+          )}
         </div>
       </section>
     </Layouts.Main>

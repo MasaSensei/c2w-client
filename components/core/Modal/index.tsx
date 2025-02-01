@@ -8,7 +8,7 @@ interface ModalProps {
 
 const Modal: React.FC<ModalProps> = ({ title, children, onClose }) => {
   return (
-    <div className="z-[99] fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="z-50 fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
       <Card className="max-h-[90%] overflow-auto bg-white rounded-lg shadow-lg w-full max-w-md relative">
         <CardHeader>
           <button

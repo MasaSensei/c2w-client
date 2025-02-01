@@ -3,6 +3,7 @@ import Table from "./Table";
 import Modal from "./Modal";
 import Input from "./Input";
 import Label from "./Label";
+import Select from "./Select";
 
 export const Cores = {
   Button,
@@ -10,4 +11,5 @@ export const Cores = {
   Modal,
   Input,
   Label,
+  Select,
 };
