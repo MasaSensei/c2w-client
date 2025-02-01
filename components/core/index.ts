@@ -4,6 +4,7 @@ import Modal from "./Modal";
 import Input from "./Input";
 import Label from "./Label";
 import Select from "./Select";
+import StockTable from "./StockTable";
 
 export const Cores = {
   Button,
@@ -12,4 +13,5 @@ export const Cores = {
   Input,
   Label,
   Select,
+  StockTable,
 };

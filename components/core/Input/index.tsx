@@ -6,6 +6,7 @@ interface InputProps {
   onChange?: () => void;
   defaultValue?: string;
   min?: string;
+  disabled?: boolean;
 }
 
 const Input: React.FC<InputProps> = ({
@@ -14,6 +15,7 @@ const Input: React.FC<InputProps> = ({
   onChange,
   defaultValue,
   min,
+  disabled,
 }) => {
   return (
     <ShadcnInput
@@ -21,8 +23,9 @@ const Input: React.FC<InputProps> = ({
       placeholder={placeholder}
       onChange={onChange}
       defaultValue={defaultValue}
-      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+      className="px-3 bg-white py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
       min={min}
+      disabled={disabled}
     />
   );
 };

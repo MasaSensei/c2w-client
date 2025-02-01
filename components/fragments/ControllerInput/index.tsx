@@ -20,6 +20,7 @@ interface ControllerInputProps<T extends FieldValues> {
   defaultValue?: PathValue<T, Path<T>>;
   options?: Option[];
   onClose?: () => void;
+  disabled?: boolean;
 }
 
 interface Option {
@@ -39,6 +40,7 @@ const ControllerInput = <T extends FieldValues>(
     errors,
     defaultValue,
     options,
+    disabled,
   } = props;
   const [categories, setCategories] = useState<string[]>([""]);
 
@@ -113,6 +115,8 @@ const ControllerInput = <T extends FieldValues>(
                   placeholder={placeholder}
                   type={type}
                   defaultValue={defaultValue}
+                  min={type === "date" ? "1" : undefined}
+                  disabled={disabled || false}
                 />
               )}
             </>

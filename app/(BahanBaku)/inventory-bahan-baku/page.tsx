@@ -229,7 +229,7 @@ const InventoryBahanBaku = () => {
         onStock={handleStock}
       />
 
-      {isStock && <Stock />}
+      {isStock && <Stock onClose={handleStock} />}
 
       {isOpen && (
         <Cores.Modal

@@ -25,7 +25,7 @@ const Select: React.FC<SelectProps> = ({
       onValueChange={onValueChange}
       defaultValue={defaultValue?.toString()}
     >
-      <SelectTrigger>
+      <SelectTrigger className="w-full bg-white">
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
