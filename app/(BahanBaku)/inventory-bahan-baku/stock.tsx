@@ -3,25 +3,27 @@
 import { Cores } from "@/components/core";
 import { Fragments } from "@/components/fragments";
 import { Layouts } from "@/components/layouts";
-import { Path, set, useForm } from "react-hook-form";
+import { Path, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { BahanBaku } from "@/types/bahanBaku";
 import { BahanBakuService } from "@/services/bahanBaku.service";
 import { Supplier } from "@/types/suppliers";
 import { SuppliersService } from "@/services/suppliers.service";
+import { IncomingBahanBakuService } from "@/services/incomingBahanBaku.service";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
-  invoice_date: z.string().min(1, { message: "Invoice Date is required" }),
-  invoice_no: z.string().min(1, { message: "Invoice No is required" }),
-  supplier: z.string().min(1, { message: "Supplier is required" }),
-  total_roll: z.number().min(1, { message: "Total Roll is required" }),
-  total_yards: z.number().min(1, { message: "Total Yard is required" }),
-  cost_per_yard: z.number().min(1, { message: "Cost per Yard is required" }),
-  sub_total: z.number().min(1, { message: "Subtotal is required" }),
-  bahan_baku: z.string().min(1, { message: "Bahan Baku is required" }),
-  length_yard: z.number().min(1, { message: "Length Yard is required" }),
+  invoice_date: z.string(),
+  invoice_no: z.string(),
+  supplier: z.string(),
+  total_roll: z.number(),
+  total_yards: z.number(),
+  cost_per_yard: z.number(),
+  sub_total: z.number(),
+  bahan_baku: z.string(),
+  length_yard: z.number(),
   remarks: z.string(),
 });
 
@@ -32,7 +34,7 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
   const [detail, setDetail] = useState<string[][][]>([]);
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const [bahanBakuIds, setBahanBakuIds] = useState<string[]>([]);
-
+  const router = useRouter();
   const {
     control,
     getValues,
@@ -65,9 +67,6 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
     "Remarks",
   ];
 
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
-    console.log(data);
-  };
   useEffect(() => {
     const fetchAllData = async () => {
       try {
@@ -265,6 +264,37 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
     );
   };
 
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    try {
+      const totalRoll = Number(data.total_roll) || 0;
+      const payload = {
+        invoice_date: data.invoice_date, // sudah sesuai
+        invoice_number: data.invoice_no, // ganti menjadi invoice_number, sesuai validator
+        id_supplier: Number(data.supplier), // ganti id_supplier dengan data.supplier, pastikan sudah number
+        details: rows.map((row, index) => ({
+          id_bahan_baku: Number(bahanBakuIds[index]), // Pastikan id_bahan_baku sudah number dan valid
+          length_yard:
+            Number(row[1]) && totalRoll > 0 ? Number(row[1]) / totalRoll : 0,
+          roll: Number(row[0]), // Pastikan roll adalah angka dan lebih dari 0
+          total_yard: Number(row[2]), // Pastikan sudah number
+          cost_per_yard: Number(row[3].replace(/[^\d]/g, "")), // Hilangkan format Rupiah dan pastikan menjadi angka
+          sub_total: Number(row[4].replace(/[^\d]/g, "")), // Hilangkan format Rupiah dan pastikan menjadi angka
+          remarks: row[5] || null, // Jika tidak ada remarks, kirimkan null (nullable)
+        })),
+      };
+
+      console.log(payload);
+
+      const response = await IncomingBahanBakuService.create(payload);
+
+      if (response.data.status === "success") {
+        router.push("/inventory-bahan-baku");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
   return (
     <Cores.Modal
       title="Stock"
@@ -272,7 +302,7 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
       maxHeight="max-h-[92vh]"
       maxWidth="max-w-[96vw]"
     >
-      <Layouts.Form>
+      <Layouts.Form onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-5">
           <div className="grid grid-cols-6 gap-4">
             {fields.slice(0, 3).map((field) => (
@@ -397,6 +427,21 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
               )}
             </div>
           </div>
+        </div>
+        <div className="flex justify-center gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="bg-gray-600 text-white hover:opacity-50 transition duration-300 px-3 py-1.5 rounded"
+          >
+            Close
+          </button>
+          <button
+            type="submit"
+            className="bg-green-500 text-white hover:opacity-50 transition duration-300 px-3 py-1.5 rounded"
+          >
+            Save
+          </button>
         </div>
       </Layouts.Form>
     </Cores.Modal>
