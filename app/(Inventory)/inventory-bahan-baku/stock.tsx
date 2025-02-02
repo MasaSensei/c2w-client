@@ -12,7 +12,6 @@ import { BahanBakuService } from "@/services/bahanBaku.service";
 import { Supplier } from "@/types/suppliers";
 import { SuppliersService } from "@/services/suppliers.service";
 import { IncomingBahanBakuService } from "@/services/incomingBahanBaku.service";
-import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   invoice_date: z.string(),
@@ -34,7 +33,7 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
   const [detail, setDetail] = useState<string[][][]>([]);
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const [bahanBakuIds, setBahanBakuIds] = useState<string[]>([]);
-  const router = useRouter();
+
   const {
     control,
     getValues,
@@ -288,13 +287,9 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
         })),
       };
 
-      console.log(payload);
+      await IncomingBahanBakuService.create(payload);
 
-      const response = await IncomingBahanBakuService.create(payload);
-
-      if (response.data.status === "success") {
-        router.push("/inventory-bahan-baku");
-      }
+      window.location.href = `/inventory-bahan-baku/incoming`;
     } catch (error) {
       console.error("Error:", error);
     }
