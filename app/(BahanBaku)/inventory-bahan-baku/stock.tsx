@@ -3,7 +3,7 @@
 import { Cores } from "@/components/core";
 import { Fragments } from "@/components/fragments";
 import { Layouts } from "@/components/layouts";
-import { Path, useForm } from "react-hook-form";
+import { Path, set, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo, useState } from "react";
@@ -29,7 +29,10 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
   const [data, setData] = useState<BahanBaku[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [rows, setRows] = useState<string[][]>([]);
-  const [detail, setDetail] = useState<string[][]>([]);
+  const [detail, setDetail] = useState<string[][][]>([]);
+  const [selectedRow, setSelectedRow] = useState<number | null>(null);
+  const [bahanBakuIds, setBahanBakuIds] = useState<string[]>([]);
+
   const {
     control,
     getValues,
@@ -120,8 +123,7 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
       placeholder: "Bahan Baku",
       required: true,
       options: data.map((item) => ({
-        label:
-          item?.code?.code + " - " + item?.color?.color + " - " + item?.item,
+        label: `${item.code.code} - ${item.color.color} - ${item.item}`,
         value: item.id.toString(),
       })),
     },
@@ -191,13 +193,10 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
     const bahanBaku = data.find(
       (item) => item.id === Number(formData.bahan_baku)
     );
+
     const newRow: string[] = [
-      formData.total_roll.toString() || "0",
-      bahanBaku?.code?.code +
-        " - " +
-        bahanBaku?.color?.color +
-        " - " +
-        bahanBaku?.item,
+      formData.total_roll.toString(),
+      `${bahanBaku?.code?.code} - ${bahanBaku?.color?.color} - ${bahanBaku?.item}`, // Nama bahan
       formData.total_yards.toString(),
       formatRupiah(formData.cost_per_yard),
       formatRupiah(formData.sub_total),
@@ -205,14 +204,65 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
     ];
 
     setRows([...rows, newRow]);
-    setDetail([
-      [formData.total_roll.toString()],
-      [formData.total_yards.toString()],
+    setBahanBakuIds([...bahanBakuIds, formData.bahan_baku]);
+    setDetail((prevDetails) => [
+      ...prevDetails,
+      [[formData.total_roll.toString(), formData.length_yard.toString()]],
     ]);
 
-    console.log(formData);
+    reset(
+      {
+        total_roll: 0,
+        total_yards: 0,
+        cost_per_yard: 0,
+        sub_total: 0,
+        remarks: "-",
+        bahan_baku: getValues("bahan_baku"),
+        length_yard: 0,
+        invoice_date: getValues("invoice_date"),
+        invoice_no: getValues("invoice_no"),
+        supplier: getValues("supplier"),
+      },
+      { keepDefaultValues: true }
+    );
+  };
 
-    // reset();
+  const handleEditItem = (rowIndex: number) => {
+    setSelectedRow(rowIndex);
+  };
+
+  useEffect(() => {
+    if (selectedRow !== null) {
+      const row = rows[selectedRow];
+      const bahanBakuId = bahanBakuIds[selectedRow];
+
+      const totalRoll = Number(row[0]) || 0;
+      const totalYards = Number(row[2]) || 0;
+
+      setValue("bahan_baku", bahanBakuId); // Simpan ID bahan baku
+      setValue("total_roll", Number(row[0]) || 0);
+      setValue("total_yards", Number(row[2]) || 0);
+
+      // Hapus "Rp" dan titik pemisah ribuan sebelum menyimpan ke form
+      setValue("cost_per_yard", Number(row[3].replace(/[^\d]/g, "")) || 0);
+      setValue("sub_total", Number(row[4].replace(/[^\d]/g, "")) || 0);
+
+      setValue("remarks", row[5] || "");
+
+      const lengthYard = totalRoll > 0 ? totalYards / totalRoll : 0;
+
+      setValue("length_yard", lengthYard);
+    }
+  }, [selectedRow, rows, setValue, bahanBakuIds]);
+
+  const handleDeleteItem = (rowIndex: number) => {
+    setRows((prevRows) => prevRows.filter((_, index) => index !== rowIndex));
+    setBahanBakuIds((prevIds) =>
+      prevIds.filter((_, index) => index !== rowIndex)
+    );
+    setDetail((prevDetails) =>
+      prevDetails.filter((_, index) => index !== rowIndex)
+    );
   };
 
   return (
@@ -338,6 +388,8 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
                     headers={headers}
                     rows={rows}
                     detail={detail}
+                    onEdit={handleEditItem}
+                    onDelete={handleDeleteItem}
                   />
                 </div>
               ) : (
