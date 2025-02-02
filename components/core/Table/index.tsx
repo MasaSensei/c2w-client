@@ -14,9 +14,10 @@ interface TableProps {
   data: { [key: string]: string | number | boolean }[];
   onEdit?: (item: { [key: string]: string | number | boolean }) => void;
   onDelete?: (item: { [key: string]: string | number | boolean }) => void;
+  onShow?: (item: { [key: string]: string | number | boolean }) => void;
 }
 
-const Table = ({ headers, data, onEdit, onDelete }: TableProps) => {
+const Table = ({ headers, data, onShow, onEdit, onDelete }: TableProps) => {
   const [search, setSearch] = useState<Record<string, string>>({});
   const [sortedData, setSortedData] = useState(data);
   const [sortConfig, setSortConfig] = useState<{
@@ -163,40 +164,68 @@ const Table = ({ headers, data, onEdit, onDelete }: TableProps) => {
                 ))}
                 <td className="whitespace-nowrap px-4 py-4 font-medium text-center align-top">
                   <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      className="text-gray-600 transition ease-in-out duration-300 hover:opacity-60"
-                      onClick={() => onEdit?.(item)}
-                    >
-                      <svg
-                        stroke="currentColor"
-                        fill="currentColor"
-                        strokeWidth="0"
-                        viewBox="0 0 576 512"
-                        height="12"
-                        width="12"
-                        xmlns="http://www.w3.org/2000/svg"
+                    {onEdit && (
+                      <button
+                        type="button"
+                        className="text-gray-600 transition ease-in-out duration-300 hover:opacity-60"
+                        onClick={() => onEdit?.(item)}
                       >
-                        <path d="M402.6 83.2l90.2 90.2c3.8 3.8 3.8 10 0 13.8L274.4 405.6l-92.8 10.3c-12.4 1.4-22.9-9.1-21.5-21.5l10.3-92.8L388.8 83.2c3.8-3.8 10-3.8 13.8 0zm162-22.9l-48.8-48.8c-15.2-15.2-39.9-15.2-55.2 0l-35.4 35.4c-3.8 3.8-3.8 10 0 13.8l90.2 90.2c3.8 3.8 10 3.8 13.8 0l35.4-35.4c15.2-15.3 15.2-40 0-55.2zM384 346.2V448H64V128h229.8c3.2 0 6.2-1.3 8.5-3.5l40-40c7.6-7.6 2.2-20.5-8.5-20.5H48C21.5 64 0 85.5 0 112v352c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48V306.2c0-10.7-12.9-16-20.5-8.5l-40 40c-2.2 2.3-3.5 5.3-3.5 8.5z"></path>
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      className="text-gray-600 transition ease-in-out duration-300 hover:opacity-60"
-                      onClick={() => onDelete?.(item)}
-                    >
-                      <svg
-                        stroke="currentColor"
-                        fill="currentColor"
-                        strokeWidth="0"
-                        viewBox="0 0 24 24"
-                        height="14"
-                        width="14"
-                        xmlns="http://www.w3.org/2000/svg"
+                        <svg
+                          stroke="currentColor"
+                          fill="currentColor"
+                          strokeWidth="0"
+                          viewBox="0 0 576 512"
+                          height="12"
+                          width="12"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path d="M402.6 83.2l90.2 90.2c3.8 3.8 3.8 10 0 13.8L274.4 405.6l-92.8 10.3c-12.4 1.4-22.9-9.1-21.5-21.5l10.3-92.8L388.8 83.2c3.8-3.8 10-3.8 13.8 0zm162-22.9l-48.8-48.8c-15.2-15.2-39.9-15.2-55.2 0l-35.4 35.4c-3.8 3.8-3.8 10 0 13.8l90.2 90.2c3.8 3.8 10 3.8 13.8 0l35.4-35.4c15.2-15.3 15.2-40 0-55.2zM384 346.2V448H64V128h229.8c3.2 0 6.2-1.3 8.5-3.5l40-40c7.6-7.6 2.2-20.5-8.5-20.5H48C21.5 64 0 85.5 0 112v352c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48V306.2c0-10.7-12.9-16-20.5-8.5l-40 40c-2.2 2.3-3.5 5.3-3.5 8.5z"></path>
+                        </svg>
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button
+                        type="button"
+                        className="text-gray-600 transition ease-in-out duration-300 hover:opacity-60"
+                        onClick={() => onDelete?.(item)}
                       >
-                        <path d="M4 8H20V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V8ZM7 5V3C7 2.44772 7.44772 2 8 2H16C16.5523 2 17 2.44772 17 3V5H22V7H2V5H7ZM9 4V5H15V4H9ZM9 12V18H11V12H9ZM13 12V18H15V12H13Z"></path>
-                      </svg>
-                    </button>
+                        <svg
+                          stroke="currentColor"
+                          fill="currentColor"
+                          strokeWidth="0"
+                          viewBox="0 0 24 24"
+                          height="14"
+                          width="14"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path d="M4 8H20V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V8ZM7 5V3C7 2.44772 7.44772 2 8 2H16C16.5523 2 17 2.44772 17 3V5H22V7H2V5H7ZM9 4V5H15V4H9ZM9 12V18H11V12H9ZM13 12V18H15V12H13Z"></path>
+                        </svg>
+                      </button>
+                    )}
+                    {onShow && (
+                      <button
+                        type="button"
+                        onClick={() => onShow?.(item)}
+                        className="mr-1 text-gray-600 transition ease-in-out duration-300 hover:opacity-60"
+                      >
+                        <svg
+                          stroke="currentColor"
+                          fill="none"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          height="13"
+                          width="13"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path d="M5 12s2.545-5 7-5c4.454 0 7 5 7 5s-2.546 5-7 5c-4.455 0-7-5-7-5z"></path>
+                          <path d="M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"></path>
+                          <path d="M21 17v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2"></path>
+                          <path d="M21 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2"></path>
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

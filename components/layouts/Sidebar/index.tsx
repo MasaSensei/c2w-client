@@ -173,7 +173,10 @@ const Sidebar = () => {
                             </Cores.Button>
                           </li>
                           <li className="mb-2">
-                            <Cores.Button type="submenuChild" to="/code">
+                            <Cores.Button
+                              type="submenuChild"
+                              to="/inventory-bahan-baku/incoming"
+                            >
                               Incoming Bahan Baku
                             </Cores.Button>
                           </li>

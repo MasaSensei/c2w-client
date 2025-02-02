@@ -112,7 +112,7 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
       required: true,
       options: suppliers.map((item) => ({
         label: item?.name,
-        value: item?.id?.toString(),
+        value: item?.id?.toString() ?? "",
       })),
     },
     {
@@ -123,13 +123,14 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
       required: true,
       options: data.map((item) => ({
         label: `${item.code.code} - ${item.color.color} - ${item.item}`,
-        value: item.id.toString(),
+        value: item.id.toString() ?? "",
       })),
     },
     {
       label: "Total Yards",
       name: "total_yards",
       type: "number",
+      placeholder: "Total Yards",
       required: true,
       readOnly: true,
     },
@@ -137,12 +138,14 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
       label: "Price/Yard",
       name: "cost_per_yard",
       type: "number",
+      placeholder: "Price/Yard",
       required: true,
     },
     {
       label: "Sub Total",
       name: "sub_total",
       type: "number",
+      placeholder: "Sub Total",
       required: true,
       readOnly: true,
     },
@@ -157,12 +160,14 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
       label: "Total Roll",
       name: "total_roll",
       type: "number",
+      placeholder: "Total Roll",
       required: true,
     },
     {
       label: "Length Yard",
       name: "length_yard",
       type: "number",
+      placeholder: "Length Yard",
       required: true,
     },
   ];
@@ -312,6 +317,7 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
                   name={field.name as Path<z.infer<typeof formSchema>>}
                   control={control}
                   errors={errors}
+                  placeholder={field.placeholder}
                   readonly={field.readOnly}
                 />
               </div>

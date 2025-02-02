@@ -8,6 +8,10 @@ export const IncomingBahanBakuService = {
     return axios.get(`${API_URL}/incoming-bahan-baku`);
   },
 
+  async getOne(id: string) {
+    return axios.get(`${API_URL}/incoming-bahan-baku/${id}`);
+  },
+
   async create(data: IncomingBahanBaku) {
     return axios.post(`${API_URL}/incoming-bahan-baku`, data, {
       headers: { "Content-Type": "application/json" },
