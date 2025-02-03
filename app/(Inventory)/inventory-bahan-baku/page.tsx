@@ -16,6 +16,7 @@ import { Code } from "@/types/codes";
 import { ColorsService } from "@/services/colors.service";
 import { CodesService } from "@/services/codes.service";
 import Stock from "./stock";
+import { OutgoingBahanBakuService } from "@/services/outgoingBahanBaku.service";
 
 const formSchema = z.object({
   code: z.string().min(1, { message: "Code is required" }),
@@ -30,6 +31,7 @@ const transferSchema = z.object({
   id_bahan_baku: z.number().min(1, { message: "ID Bahan Baku is required" }),
   total_roll: z.string().min(1, { message: "Total Roll is required" }),
   total_yard: z.string().min(1, { message: "Total Yard is required" }),
+  remarks: z.string(),
 });
 
 const InventoryBahanBaku = () => {
@@ -141,6 +143,7 @@ const InventoryBahanBaku = () => {
     control: transferControl,
     handleSubmit: handleTransferSubmit,
     setValue: setTransferValue,
+    reset: transferReset,
     formState: { errors: transferErrors },
   } = useForm<z.infer<typeof transferSchema>>({
     resolver: zodResolver(transferSchema),
@@ -150,6 +153,7 @@ const InventoryBahanBaku = () => {
       id_bahan_baku: 0,
       total_roll: "",
       total_yard: "",
+      remarks: "",
     },
   });
 
@@ -179,6 +183,12 @@ const InventoryBahanBaku = () => {
         label: `Total Yard: ${selectedTransferData?.total_yard}`,
         type: "number",
         placeholder: "Masukkan Total Yard",
+      },
+      {
+        name: "remarks",
+        label: "Remarks",
+        type: "text",
+        placeholder: "Masukkan Remarks",
       },
     ],
     [selectedTransferData]
@@ -343,17 +353,36 @@ const InventoryBahanBaku = () => {
     setSelectedTransferData(fullData);
 
     setIsTransferOpen(true);
+
+    window.location.reload();
   };
 
   const handleTransferForm: SubmitHandler<z.infer<typeof transferSchema>> = (
     data
   ) => {
-    // Log data yang disubmit
-    console.log("Data yang disubmit:", data);
+    try {
+      const payload = {
+        id_bahan_baku: data.id_bahan_baku,
+        outgoing_date: data.input_date,
+        total_roll: Number(data.total_roll),
+        total_yard: Number(data.total_yard),
+        status: "cutting",
+        remarks: data.remarks,
+        is_active: 1,
+      };
 
-    // Setelah itu kamu bisa melanjutkan dengan tindakan lain
-    setSelectedTransferData(null); // Reset data yang terpilih
-    setIsTransferOpen(false); // Tutup modal
+      console.log(payload);
+
+      OutgoingBahanBakuService.create(payload);
+
+      setSelectedTransferData(null);
+
+      transferReset();
+
+      setIsTransferOpen(false);
+    } catch (error) {
+      console.error("Error:", error);
+    }
   };
 
   return (

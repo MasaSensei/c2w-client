@@ -44,7 +44,7 @@ const ShowIncomingBahanBaku = () => {
     const newRows = data.details.map((detail) => [
       `${detail.bahan_baku?.code?.code} - ${detail.bahan_baku?.color?.color} - ${detail.bahan_baku?.item}`,
       detail.roll?.toString() || "-",
-      detail.length_yard?.toString() || "-",
+      detail.total_yard?.toString() || "-",
       formatRupiah(detail.cost_per_yard || "0"),
       formatRupiah(detail.sub_total || "0"),
       detail.remarks || "-",

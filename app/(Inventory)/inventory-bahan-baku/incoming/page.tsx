@@ -6,15 +6,11 @@ import { IncomingBahanBaku as IncomingBahanBakuType } from "@/types/incomingBaha
 import { IncomingBahanBakuService } from "@/services/incomingBahanBaku.service";
 import { useState, useEffect } from "react";
 import { Cores } from "@/components/core";
-import { ClipLoader } from "react-spinners";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 
 const IncomingBahanBaku = () => {
   const [data, setData] = useState<IncomingBahanBakuType[]>([]);
-  const [selectedData, setSelectedData] =
-    useState<IncomingBahanBakuType | null>(null);
-  const [loading, setLoading] = useState(false);
 
   const router = useRouter();
 
@@ -48,7 +44,6 @@ const IncomingBahanBaku = () => {
       console.log("Data tidak ditemukan");
       return;
     }
-    setSelectedData(fullData);
 
     router.push(`/inventory-bahan-baku/incoming/${fullData.id}`);
   };
@@ -59,7 +54,6 @@ const IncomingBahanBaku = () => {
       <section className="flex-1 p-4">
         <div className="bg-white border boder-gray-200 rounded-lg w-full relative">
           <div className="w-fit min-w-full sm:flex sm:justify-center">
-            {loading && <ClipLoader color="black" />}
             <Cores.Table
               onShow={handleShow}
               headers={headers}
