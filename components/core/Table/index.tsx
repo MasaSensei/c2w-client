@@ -15,9 +15,17 @@ interface TableProps {
   onEdit?: (item: { [key: string]: string | number | boolean }) => void;
   onDelete?: (item: { [key: string]: string | number | boolean }) => void;
   onShow?: (item: { [key: string]: string | number | boolean }) => void;
+  transfer?: (item: { [key: string]: string | number | boolean }) => void;
 }
 
-const Table = ({ headers, data, onShow, onEdit, onDelete }: TableProps) => {
+const Table = ({
+  headers,
+  data,
+  onShow,
+  onEdit,
+  onDelete,
+  transfer,
+}: TableProps) => {
   const [search, setSearch] = useState<Record<string, string>>({});
   const [sortedData, setSortedData] = useState(data);
   const [sortConfig, setSortConfig] = useState<{
@@ -164,6 +172,15 @@ const Table = ({ headers, data, onShow, onEdit, onDelete }: TableProps) => {
                 ))}
                 <td className="whitespace-nowrap px-4 py-4 font-medium text-center align-top">
                   <div className="flex items-center gap-3">
+                    {transfer && (
+                      <button
+                        type="button"
+                        className="text-gray-600 bg-gray-100 rounded p-1 transition ease-in-out duration-300 hover:opacity-60"
+                        onClick={() => transfer?.(item)}
+                      >
+                        Transfer
+                      </button>
+                    )}
                     {onEdit && (
                       <button
                         type="button"

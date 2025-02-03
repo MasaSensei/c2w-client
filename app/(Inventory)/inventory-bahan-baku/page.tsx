@@ -126,6 +126,30 @@ const InventoryBahanBaku = () => {
     [code, color]
   );
 
+  const transferFields = useMemo(
+    () => [
+      {
+        name: "total_roll",
+        label: "Total Roll",
+        type: "number",
+        placeholder: "Masukkan Total Roll",
+      },
+      {
+        name: "total_yard",
+        label: "Total Yard",
+        type: "number",
+        placeholder: "Masukkan Total Yard",
+      },
+      {
+        name: "cost_per_yard",
+        label: "Cost per Yard",
+        type: "number",
+        placeholder: "Masukkan Cost per Yard",
+      },
+    ],
+    []
+  );
+
   const formatRupiah = (value: number | string) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -229,6 +253,16 @@ const InventoryBahanBaku = () => {
 
     setSelectedData(fullData);
     setIsOpen(true);
+  };
+
+  const handleTransfer = (item: Record<string, string | number | boolean>) => {
+    const fullData = data.find((d) => d.id?.toString() === item.id);
+    if (!fullData) {
+      console.log("Data tidak ditemukan");
+      return;
+    }
+
+    console.log(fullData);
   };
 
   const handleDelete = async (
@@ -351,6 +385,7 @@ const InventoryBahanBaku = () => {
               data={formatData(data)}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              transfer={handleTransfer}
             />
           )}
         </div>
