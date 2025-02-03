@@ -1,13 +1,13 @@
-type Material = {
+type Prices = {
   material_category?: string;
-  price_per_yard?: number;
+  min_cost?: string;
+  cost_per_yard?: string;
 };
 
 type WorkerType = {
   worker_type?: string;
   min_cost?: number;
   is_active?: boolean;
-  materials?: Material[];
 };
 
 export type Worker = {
@@ -20,6 +20,9 @@ export type Worker = {
   updated_at?: string;
   deleted_at?: string | null;
   worker_types?: WorkerType[];
+  prices?: Prices[];
+  min_cost?: string;
+  type?: string;
 };
 
 export type ApiResponse = {
