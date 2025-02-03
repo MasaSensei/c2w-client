@@ -24,11 +24,22 @@ const formSchema = z.object({
   remarks: z.string(),
 });
 
+const transferSchema = z.object({
+  input_date: z.string().min(1, { message: "Input Date is required" }),
+  bahan_baku: z.string().min(1, { message: "Bahan Baku is required" }),
+  id_bahan_baku: z.number().min(1, { message: "ID Bahan Baku is required" }),
+  total_roll: z.string().min(1, { message: "Total Roll is required" }),
+  total_yard: z.string().min(1, { message: "Total Yard is required" }),
+});
+
 const InventoryBahanBaku = () => {
   const [data, setData] = useState<BahanBaku[]>([]);
   const [color, setColor] = useState<Color[]>([]);
   const [code, setCode] = useState<Code[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
+  const [selectedTransferData, setSelectedTransferData] =
+    useState<BahanBaku | null>(null);
   const [isStock, setIsStock] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedData, setSelectedData] = useState<BahanBaku | null>(null);
@@ -126,28 +137,51 @@ const InventoryBahanBaku = () => {
     [code, color]
   );
 
+  const {
+    control: transferControl,
+    handleSubmit: handleTransferSubmit,
+    setValue: setTransferValue,
+    formState: { errors: transferErrors },
+  } = useForm<z.infer<typeof transferSchema>>({
+    resolver: zodResolver(transferSchema),
+    defaultValues: {
+      input_date: "",
+      bahan_baku: "",
+      id_bahan_baku: 0,
+      total_roll: "",
+      total_yard: "",
+    },
+  });
+
   const transferFields = useMemo(
     () => [
       {
+        name: "input_date",
+        label: "Input Date",
+        type: "date",
+        placeholder: "Masukkan Input Date",
+      },
+      {
+        name: "bahan_baku",
+        label: "Bahan Baku",
+        type: "text",
+        placeholder: "Masukkan Bahan Baku",
+        readOnly: true,
+      },
+      {
         name: "total_roll",
-        label: "Total Roll",
+        label: `Total Roll: ${selectedTransferData?.total_roll}`,
         type: "number",
         placeholder: "Masukkan Total Roll",
       },
       {
         name: "total_yard",
-        label: "Total Yard",
+        label: `Total Yard: ${selectedTransferData?.total_yard}`,
         type: "number",
         placeholder: "Masukkan Total Yard",
       },
-      {
-        name: "cost_per_yard",
-        label: "Cost per Yard",
-        type: "number",
-        placeholder: "Masukkan Cost per Yard",
-      },
     ],
-    []
+    [selectedTransferData]
   );
 
   const formatRupiah = (value: number | string) => {
@@ -255,16 +289,6 @@ const InventoryBahanBaku = () => {
     setIsOpen(true);
   };
 
-  const handleTransfer = (item: Record<string, string | number | boolean>) => {
-    const fullData = data.find((d) => d.id?.toString() === item.id);
-    if (!fullData) {
-      console.log("Data tidak ditemukan");
-      return;
-    }
-
-    console.log(fullData);
-  };
-
   const handleDelete = async (
     item: Record<string, string | number | boolean>
   ) => {
@@ -296,6 +320,40 @@ const InventoryBahanBaku = () => {
         setIsLoading(false);
       }
     }
+  };
+
+  const handleTransfer = (item: Record<string, string | number | boolean>) => {
+    const fullData = data.find((d) => d.id?.toString() === item.id);
+    if (!fullData) {
+      console.log("Data tidak ditemukan");
+      return;
+    }
+
+    setTransferValue(
+      "bahan_baku",
+      fullData.code?.code +
+        " - " +
+        fullData.color?.color +
+        " - " +
+        fullData.item || ""
+    );
+    setTransferValue("id_bahan_baku", fullData.id || 0);
+    setTransferValue("input_date", new Date().toISOString().split("T")[0]);
+
+    setSelectedTransferData(fullData);
+
+    setIsTransferOpen(true);
+  };
+
+  const handleTransferForm: SubmitHandler<z.infer<typeof transferSchema>> = (
+    data
+  ) => {
+    // Log data yang disubmit
+    console.log("Data yang disubmit:", data);
+
+    // Setelah itu kamu bisa melanjutkan dengan tindakan lain
+    setSelectedTransferData(null); // Reset data yang terpilih
+    setIsTransferOpen(false); // Tutup modal
   };
 
   return (
@@ -366,6 +424,47 @@ const InventoryBahanBaku = () => {
                 className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"
               >
                 {isLoading ? <ClipLoader size={20} color="#fff" /> : "Simpan"}
+              </button>
+            </div>
+          </Layouts.Form>
+        </Cores.Modal>
+      )}
+
+      {isTransferOpen && (
+        <Cores.Modal
+          title="Transfer Bahan Baku Ke Tukang Potong"
+          onClose={() => setIsTransferOpen(false)}
+          key={selectedTransferData?.id || "transfer"}
+        >
+          <Layouts.Form onSubmit={handleTransferSubmit(handleTransferForm)}>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Form Transfer */}
+              {transferFields.map((field) => (
+                <div key={field.name} className="col-span-2">
+                  <Fragments.ControllerInput
+                    {...field}
+                    control={transferControl}
+                    readonly={field.readOnly}
+                    name={field.name as Path<z.infer<typeof transferSchema>>}
+                    errors={transferErrors}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-4 mt-6">
+              <button
+                type="button"
+                onClick={() => setIsTransferOpen(false)}
+                className="px-4 py-2 text-sm bg-gray-200 rounded hover:bg-gray-300"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 text-sm text-white bg-green-600 rounded hover:bg-green-700"
+              >
+                Transfer
               </button>
             </div>
           </Layouts.Form>
