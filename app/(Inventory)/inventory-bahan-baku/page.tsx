@@ -181,7 +181,7 @@ const InventoryBahanBaku = () => {
       {
         name: "total_yard",
         label: `Total Yard: ${selectedTransferData?.total_yard}`,
-        type: "number",
+        type: "string",
         placeholder: "Masukkan Total Yard",
       },
       {
@@ -353,8 +353,6 @@ const InventoryBahanBaku = () => {
     setSelectedTransferData(fullData);
 
     setIsTransferOpen(true);
-
-    window.location.reload();
   };
 
   const handleTransferForm: SubmitHandler<z.infer<typeof transferSchema>> = (
@@ -371,8 +369,6 @@ const InventoryBahanBaku = () => {
         is_active: 1,
       };
 
-      console.log(payload);
-
       OutgoingBahanBakuService.create(payload);
 
       setSelectedTransferData(null);
@@ -380,6 +376,8 @@ const InventoryBahanBaku = () => {
       transferReset();
 
       setIsTransferOpen(false);
+
+      window.location.reload();
     } catch (error) {
       console.error("Error:", error);
     }

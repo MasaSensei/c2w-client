@@ -6,7 +6,14 @@ import { Button as ShadcnButton } from "@/components/ui/button";
 import { useRouter, usePathname } from "next/navigation";
 
 type ButtonProps = {
-  type?: "default" | "submenuParent" | "submenuChild" | "filter" | "add";
+  type?:
+    | "default"
+    | "submenuParent"
+    | "submenuChild"
+    | "filter"
+    | "add"
+    | "delete"
+    | "edit";
   icon?: ReactNode;
   children: ReactNode;
   onClick?: () => void;
@@ -52,6 +59,9 @@ const Button: React.FC<ButtonProps> = ({
     filter:
       "border border-gray-400 text-gray-600 py-1.5 px-3 rounded-lg flex items-center gap-1 text-xs bg-white",
     add: "border border-white bg-green-500 text-white py-1.5 px-3 rounded-lg flex items-center gap-1 text-xs",
+    edit: "border border-white bg-green-500 text-white py-1.5 px-3 rounded-lg flex items-center gap-1 text-xs",
+    delete:
+      "border border-white bg-red-500 text-white py-1.5 px-3 rounded-lg flex items-center gap-1 text-xs",
   };
 
   const buttonClass = cn(

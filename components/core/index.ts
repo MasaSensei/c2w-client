@@ -5,7 +5,6 @@ import Input from "./Input";
 import Label from "./Label";
 import Select from "./Select";
 import StockTable from "./StockTable";
-import TableDetails from "./TableDetail";
 
 export const Cores = {
   Button,
@@ -15,5 +14,4 @@ export const Cores = {
   Label,
   Select,
   StockTable,
-  TableDetails,
 };

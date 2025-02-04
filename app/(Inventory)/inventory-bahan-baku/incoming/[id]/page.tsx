@@ -7,11 +7,13 @@ import { IncomingBahanBakuService } from "@/services/incomingBahanBaku.service";
 import { IncomingBahanBaku } from "@/types/incomingBahanBaku";
 import { usePathname } from "next/navigation";
 import { Cores } from "@/components/core";
+import Stock from "./stock";
 
 const ShowIncomingBahanBaku = () => {
   const [data, setData] = useState<IncomingBahanBaku | null>(null);
   const [detailsTable, setDetailsTable] = useState<string[][][]>([]);
   const [rows, setRows] = useState<string[][]>([]);
+  const [isEdit, setIsEdit] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -124,9 +126,18 @@ const ShowIncomingBahanBaku = () => {
     "Remarks",
   ];
 
+  const handleEdit = () => {
+    setIsEdit(!isEdit);
+  };
+
   return (
     <Layouts.Main>
-      <Fragments.HeaderWithActions title="Incoming Stock Report (Bahan Baku) Details" />
+      <Fragments.HeaderWithActions
+        title="Incoming Stock Report (Bahan Baku) Details"
+        onEdit={handleEdit}
+        onDelete={() => {}}
+      />
+      {isEdit && <Stock onClose={handleEdit} />}
       <section className="flex-1 bg-gray-50 overflow-auto p-4">
         <div className="overflow-auto border rounded bg-white">
           <div className="bg-gray-100 p-4 grid grid-cols-3 gap-4 text-sm text-dark">
