@@ -421,6 +421,8 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
                     detail={detail}
                     onEdit={handleEditItem}
                     onDelete={handleDeleteItem}
+                    onEditShow
+                    onDeleteShow
                   />
                 </div>
               ) : (

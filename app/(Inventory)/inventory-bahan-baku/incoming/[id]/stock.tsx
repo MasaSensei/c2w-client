@@ -12,6 +12,7 @@ import { BahanBakuService } from "@/services/bahanBaku.service";
 import { Supplier } from "@/types/suppliers";
 import { SuppliersService } from "@/services/suppliers.service";
 import { IncomingBahanBakuService } from "@/services/incomingBahanBaku.service";
+import { IncomingBahanBaku } from "@/types/incomingBahanBaku";
 
 const formSchema = z.object({
   invoice_date: z.string(),
@@ -27,7 +28,8 @@ const formSchema = z.object({
 });
 
 const Stock = ({ onClose }: { onClose: () => void }) => {
-  const [data, setData] = useState<BahanBaku[]>([]);
+  const [data, setData] = useState<IncomingBahanBaku[]>([]);
+  const [bahanBaku, setBahanBaku] = useState<BahanBaku[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [rows, setRows] = useState<string[][]>([]);
   const [detail, setDetail] = useState<string[][][]>([]);
@@ -69,11 +71,52 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
   useEffect(() => {
     const fetchAllData = async () => {
       try {
+        const id = window.location.pathname.split("/").pop() || "";
+        const incomingBahanBakuRes = await IncomingBahanBakuService.getOne(id);
+        const incomingData = incomingBahanBakuRes.data.data;
+
+        if (incomingData) {
+          setData(incomingData);
+          setValue("invoice_date", incomingData.invoice_date);
+          setValue("invoice_no", incomingData?.invoice_number);
+          setValue("supplier", incomingData?.suppliers?.id?.toString());
+
+          // **Memformat items ke dalam rows**
+          const formattedRows = incomingData.details.map(
+            (item: IncomingBahanBaku) => [
+              item?.roll?.toString(),
+              `${item?.bahan_baku?.code?.code} - ${item?.bahan_baku?.color?.color} - ${item?.bahan_baku?.item}`,
+              item?.total_yard?.toString(),
+              formatRupiah(item?.cost_per_yard), // Harga per yard
+              formatRupiah(item?.sub_total) || "0", // Subtotal
+              item.remarks || "-", // Remarks
+              console.log(item),
+            ]
+          );
+
+          const bahanBakuIdsFromAPI = incomingData.details.map((item: any) =>
+            item.id_bahan_baku.toString()
+          );
+
+          setRows(formattedRows);
+          setBahanBakuIds(bahanBakuIdsFromAPI);
+          setDetail(
+            incomingData.details.map((item: any) => [
+              [item.roll.toString(), (item.total_yard / item.roll).toString()],
+            ])
+          );
+        }
+      } catch (err) {
+        console.error("Error fetching incoming Bahan Baku:", err);
+        setData([]);
+      }
+
+      try {
         const bahanBakuRes = await BahanBakuService.getAll();
-        setData(bahanBakuRes.data.data);
+        setBahanBaku(bahanBakuRes.data.data);
       } catch (err) {
         console.error("Error fetching Bahan Baku:", err);
-        setData([]); // Tetap set state kosong agar tidak error di render
+        setBahanBaku([]);
       }
 
       try {
@@ -81,7 +124,7 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
         setSuppliers(suppliersRes.data.data);
       } catch (err) {
         console.error("Error fetching Suppliers:", err);
-        setSuppliers([]); // Tetap set state kosong agar tidak error di render
+        setSuppliers([]);
       }
     };
 
@@ -102,6 +145,7 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
       type: "text",
       placeholder: "Invoice No",
       required: true,
+      readOnly: true,
     },
     {
       label: "Supplier",
@@ -120,7 +164,7 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
       type: "select",
       placeholder: "Bahan Baku",
       required: true,
-      options: data.map((item) => ({
+      options: bahanBaku.map((item) => ({
         label: `${item.code.code} - ${item.color.color} - ${item.item}`,
         value: item.id.toString() ?? "",
       })),
@@ -193,13 +237,17 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
 
   const handleAddItem = () => {
     const formData = getValues();
-    const bahanBaku = data.find(
+
+    // Ambil data dari bahanBaku yang sudah tersedia
+    const bahanBakuItem = bahanBaku.find(
       (item) => item.id === Number(formData.bahan_baku)
     );
 
     const newRow: string[] = [
       formData.total_roll.toString(),
-      `${bahanBaku?.code?.code} - ${bahanBaku?.color?.color} - ${bahanBaku?.item}`, // Nama bahan
+      bahanBakuItem
+        ? `${bahanBakuItem.code.code} - ${bahanBakuItem.color.color} - ${bahanBakuItem.item}`
+        : "Bahan Tidak Ditemukan",
       formData.total_yards.toString(),
       formatRupiah(formData.cost_per_yard),
       formatRupiah(formData.sub_total),
@@ -212,22 +260,6 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
       ...prevDetails,
       [[formData.total_roll.toString(), formData.length_yard.toString()]],
     ]);
-
-    reset(
-      {
-        total_roll: 0,
-        total_yards: 0,
-        cost_per_yard: 0,
-        sub_total: 0,
-        remarks: "-",
-        bahan_baku: getValues("bahan_baku"),
-        length_yard: 0,
-        invoice_date: getValues("invoice_date"),
-        invoice_no: getValues("invoice_no"),
-        supplier: getValues("supplier"),
-      },
-      { keepDefaultValues: true }
-    );
   };
 
   const handleEditItem = (rowIndex: number) => {
@@ -238,12 +270,13 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
     if (selectedRow !== null) {
       const row = rows[selectedRow];
       const bahanBakuId = bahanBakuIds[selectedRow];
+      console.log(bahanBakuId);
 
       const totalRoll = Number(row[0]) || 0;
       const totalYards = Number(row[2]) || 0;
 
-      setValue("bahan_baku", bahanBakuId); // Simpan ID bahan baku
-      setValue("total_roll", Number(row[0]) || 0);
+      setValue("bahan_baku", "1");
+      setValue("total_roll", row[0] || 0);
       setValue("total_yards", Number(row[2]) || 0);
 
       // Hapus "Rp" dan titik pemisah ribuan sebelum menyimpan ke form
@@ -419,6 +452,8 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
                     headers={headers}
                     rows={rows}
                     detail={detail}
+                    onDeleteShow={true}
+                    onEditShow={true}
                     onEdit={handleEditItem}
                     onDelete={handleDeleteItem}
                   />

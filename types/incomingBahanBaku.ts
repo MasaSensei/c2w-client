@@ -26,7 +26,7 @@ type BahanBaku = {
   code?: Code;
 };
 
-type Detail = {
+export type Detail = {
   id?: number;
   id_incoming_bahan_baku?: number;
   id_bahan_baku?: number;
@@ -57,6 +57,13 @@ export type IncomingBahanBaku = {
   is_active?: number;
   suppliers?: Supplier;
   details?: Detail[];
+  roll?: number;
+  bahan_baku?: BahanBaku;
+  total_yard?: number;
+  sub_total?: number;
+  total_roll?: string;
+  cost_per_yard?: number;
+  remarks?: string;
 };
 
 export type IncomingResponse = {
