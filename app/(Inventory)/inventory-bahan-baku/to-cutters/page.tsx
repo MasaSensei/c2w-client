@@ -3,12 +3,12 @@
 import { Cores } from "@/components/core";
 import { Fragments } from "@/components/fragments";
 import { Layouts } from "@/components/layouts";
-import { OutgoingBahanBakuService } from "@/services/outgoingBahanBaku.service";
-import { OutgoingBahanBaku } from "@/types/outgoingBahanBaku";
+import { InventoryBahanBakuToCuttersService } from "@/services/inventoyBahanBakuToCutters.service";
+import { InventoryBahanBakuToCutters } from "@/types/inventoryBahanBakuToCutters";
 import { useState, useEffect } from "react";
 
-const OutgoingBahanBakuPage = () => {
-  const [data, setData] = useState<OutgoingBahanBaku[]>([]);
+const ToCuttersPage = () => {
+  const [data, setData] = useState<InventoryBahanBakuToCutters[]>([]);
   const headers = [
     "Date",
     "Bahan",
@@ -21,7 +21,7 @@ const OutgoingBahanBakuPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await OutgoingBahanBakuService.getAll();
+        const res = await InventoryBahanBakuToCuttersService.getAll();
         if (res.data.data) {
           setData(res.data.data);
         } else {
@@ -36,27 +36,20 @@ const OutgoingBahanBakuPage = () => {
     fetchData();
   }, []);
 
-  const formatData = (data: OutgoingBahanBaku[]) => {
+  const formatData = (data: InventoryBahanBakuToCutters[]) => {
     return data.map((item) => ({
-      Date: item.outgoing_date || "-",
-      Bahan:
-        `${item.bahanbaku?.code?.code} - ${item.bahanbaku?.color?.color} - ${item.bahanbaku?.item}` ||
-        "-",
-      "Total Roll": item.total_roll || 0,
-      "Total Yard": item.total_yard || 0,
-      Status:
-        `${
-          item.status === "cutting"
-            ? "Cutting"
-            : `Return (No. Invoice: ${item?.incoming_invoice_number})`
-        }` || "-",
+      Date: item.transfer_date || "-",
+      Bahan: item?.item || "-",
+      "Total Roll": item?.total_roll || 0,
+      "Total Yard": item?.total_yard || 0,
+      Status: item.status || "-",
       Remarks: item.remarks || "-",
     }));
   };
 
   return (
     <Layouts.Main>
-      <Fragments.HeaderWithActions title="Outgoing Stock Report (Bahan Baku)" />
+      <Fragments.HeaderWithActions title="To Cutters" />
       <section className="flex-1 p-4">
         <div className="bg-white border boder-gray-200 rounded-lg w-full relative">
           <div className="w-fit min-w-full sm:flex sm:justify-center">
@@ -68,4 +61,4 @@ const OutgoingBahanBakuPage = () => {
   );
 };
 
-export default OutgoingBahanBakuPage;
+export default ToCuttersPage;

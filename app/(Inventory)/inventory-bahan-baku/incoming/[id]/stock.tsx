@@ -28,7 +28,6 @@ const formSchema = z.object({
 });
 
 const Stock = ({ onClose }: { onClose: () => void }) => {
-  const [data, setData] = useState<IncomingBahanBaku[]>([]);
   const [bahanBaku, setBahanBaku] = useState<BahanBaku[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [rows, setRows] = useState<string[][]>([]);
@@ -40,7 +39,6 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
     control,
     getValues,
     handleSubmit,
-    reset,
     setValue,
     formState: { errors },
   } = useForm<z.infer<typeof formSchema>>({
@@ -76,7 +74,6 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
         const incomingData = incomingBahanBakuRes.data.data;
 
         if (incomingData) {
-          setData(incomingData);
           setValue("invoice_date", incomingData.invoice_date);
           setValue("invoice_no", incomingData?.invoice_number);
           setValue("supplier", incomingData?.suppliers?.id?.toString());
@@ -87,8 +84,8 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
               item?.roll?.toString(),
               `${item?.bahan_baku?.code?.code} - ${item?.bahan_baku?.color?.color} - ${item?.bahan_baku?.item}`,
               item?.total_yard?.toString(),
-              formatRupiah(item?.cost_per_yard), // Harga per yard
-              formatRupiah(item?.sub_total) || "0", // Subtotal
+              formatRupiah(Number(item?.cost_per_yard)), // Harga per yard
+              formatRupiah(Number(item?.sub_total)) || "0", // Subtotal
               item.remarks || "-", // Remarks
               console.log(item),
             ]
@@ -101,14 +98,16 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
           setRows(formattedRows);
           setBahanBakuIds(bahanBakuIdsFromAPI);
           setDetail(
-            incomingData.details.map((item: any) => [
-              [item.roll.toString(), (item.total_yard / item.roll).toString()],
+            incomingData.details.map((item: IncomingBahanBaku) => [
+              [
+                item?.roll?.toString(),
+                (item?.total_yard / item?.roll)?.toString(),
+              ],
             ])
           );
         }
       } catch (err) {
         console.error("Error fetching incoming Bahan Baku:", err);
-        setData([]);
       }
 
       try {
@@ -276,7 +275,7 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
       const totalYards = Number(row[2]) || 0;
 
       setValue("bahan_baku", "1");
-      setValue("total_roll", row[0] || 0);
+      setValue("total_roll", Number(row[0]) || 0);
       setValue("total_yards", Number(row[2]) || 0);
 
       // Hapus "Rp" dan titik pemisah ribuan sebelum menyimpan ke form

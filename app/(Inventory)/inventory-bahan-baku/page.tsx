@@ -16,7 +16,7 @@ import { Code } from "@/types/codes";
 import { ColorsService } from "@/services/colors.service";
 import { CodesService } from "@/services/codes.service";
 import Stock from "./stock";
-import { OutgoingBahanBakuService } from "@/services/outgoingBahanBaku.service";
+import { InventoryBahanBakuToCuttersService } from "@/services/inventoyBahanBakuToCutters.service";
 
 const formSchema = z.object({
   code: z.string().min(1, { message: "Code is required" }),
@@ -62,7 +62,7 @@ const InventoryBahanBaku = () => {
         setData(bahanBakuRes.data.data);
       } catch (err) {
         console.error("Error fetching Bahan Baku:", err);
-        setData([]); // Tetap set state kosong agar tidak error di render
+        setData([]);
       }
 
       try {
@@ -70,7 +70,7 @@ const InventoryBahanBaku = () => {
         setColor(colorsRes.data.data);
       } catch (err) {
         console.error("Error fetching Colors:", err);
-        setColor([]); // Tetap set state kosong agar tidak error di render
+        setColor([]);
       }
 
       try {
@@ -78,7 +78,7 @@ const InventoryBahanBaku = () => {
         setCode(codesRes.data.data);
       } catch (err) {
         console.error("Error fetching Codes:", err);
-        setCode([]); // Tetap set state kosong agar tidak error di render
+        setCode([]);
       }
     };
 
@@ -143,7 +143,6 @@ const InventoryBahanBaku = () => {
     control: transferControl,
     handleSubmit: handleTransferSubmit,
     setValue: setTransferValue,
-    reset: transferReset,
     formState: { errors: transferErrors },
   } = useForm<z.infer<typeof transferSchema>>({
     resolver: zodResolver(transferSchema),
@@ -361,23 +360,24 @@ const InventoryBahanBaku = () => {
     try {
       const payload = {
         id_bahan_baku: data.id_bahan_baku,
-        outgoing_date: data.input_date,
+        transfer_date: data.input_date,
+        item: data?.bahan_baku,
         total_roll: Number(data.total_roll),
         total_yard: Number(data.total_yard),
-        status: "cutting",
+        status: "ready",
         remarks: data.remarks,
         is_active: 1,
       };
 
-      OutgoingBahanBakuService.create(payload);
+      InventoryBahanBakuToCuttersService.create(payload);
 
       setSelectedTransferData(null);
 
-      transferReset();
+      // transferReset();
 
-      setIsTransferOpen(false);
+      // setIsTransferOpen(false);
 
-      window.location.reload();
+      // window.location.reload();
     } catch (error) {
       console.error("Error:", error);
     }
