@@ -15,6 +15,12 @@ import { Color } from "@/types/colors";
 import { Code } from "@/types/codes";
 import { ColorsService } from "@/services/colors.service";
 import { CodesService } from "@/services/codes.service";
+import { ModelsService } from "@/services/models.service";
+import { Model } from "@/types/models";
+import { CategoriesService } from "@/services/categories.service";
+import { Category } from "@/types/category";
+import { Size } from "@/types/size";
+import { SizesService } from "@/services/sizes.service";
 import Stock from "./stock";
 import { InventoryBahanBakuToCuttersService } from "@/services/inventoyBahanBakuToCutters.service";
 
@@ -29,8 +35,11 @@ const transferSchema = z.object({
   input_date: z.string().min(1, { message: "Input Date is required" }),
   bahan_baku: z.string().min(1, { message: "Bahan Baku is required" }),
   id_bahan_baku: z.number().min(1, { message: "ID Bahan Baku is required" }),
+  size: z.string().min(1, { message: "Size is required" }),
   total_roll: z.string().min(1, { message: "Total Roll is required" }),
   total_yard: z.string().min(1, { message: "Total Yard is required" }),
+  category: z.array(z.string()).min(1, { message: "Category is required" }),
+  model: z.string().min(1, { message: "Model is required" }),
   remarks: z.string(),
 });
 
@@ -38,6 +47,8 @@ const InventoryBahanBaku = () => {
   const [data, setData] = useState<BahanBaku[]>([]);
   const [color, setColor] = useState<Color[]>([]);
   const [code, setCode] = useState<Code[]>([]);
+  const [models, setModels] = useState<Model[]>([]);
+  const [category, setCategory] = useState<Category[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isTransferOpen, setIsTransferOpen] = useState(false);
   const [selectedTransferData, setSelectedTransferData] =
@@ -45,6 +56,7 @@ const InventoryBahanBaku = () => {
   const [isStock, setIsStock] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedData, setSelectedData] = useState<BahanBaku | null>(null);
+  const [sizes, setSizes] = useState<Size[]>([]);
   const headers = [
     "Code",
     "Color",
@@ -79,6 +91,30 @@ const InventoryBahanBaku = () => {
       } catch (err) {
         console.error("Error fetching Codes:", err);
         setCode([]);
+      }
+
+      try {
+        const modelsRes = await ModelsService.getAll();
+        setModels(modelsRes.data.data);
+      } catch (err) {
+        console.error("Error fetching Models:", err);
+        setModels([]);
+      }
+
+      try {
+        const categoriesRes = await CategoriesService.getAll();
+        setCategory(categoriesRes.data.data);
+      } catch (err) {
+        console.error("Error fetching Categories:", err);
+        setCategory([]);
+      }
+
+      try {
+        const sizesRes = await SizesService.getAll();
+        setSizes(sizesRes.data.data);
+      } catch (err) {
+        console.error("Error fetching Sizes:", err);
+        setSizes([]);
       }
     };
 
@@ -149,10 +185,13 @@ const InventoryBahanBaku = () => {
     defaultValues: {
       input_date: "",
       bahan_baku: "",
+      size: "",
       id_bahan_baku: 0,
       total_roll: "",
       total_yard: "",
       remarks: "",
+      model: "",
+      category: [],
     },
   });
 
@@ -170,6 +209,33 @@ const InventoryBahanBaku = () => {
         type: "text",
         placeholder: "Masukkan Bahan Baku",
         readOnly: true,
+      },
+      {
+        name: "model",
+        label: "Model",
+        type: "select",
+        options: models.map((m) => ({
+          value: m?.id?.toString() || "",
+          label: m.model,
+        })),
+      },
+      {
+        name: "size",
+        label: "Size",
+        type: "select",
+        options: sizes.map((s) => ({
+          value: s?.id?.toString() || "",
+          label: s.size,
+        })),
+      },
+      {
+        name: "category",
+        label: "Category",
+        type: "category",
+        options: category.map((c) => ({
+          value: c?.id?.toString() || "",
+          label: c.category,
+        })),
       },
       {
         name: "total_roll",
@@ -357,6 +423,7 @@ const InventoryBahanBaku = () => {
   const handleTransferForm: SubmitHandler<z.infer<typeof transferSchema>> = (
     data
   ) => {
+    console.log(data);
     try {
       const payload = {
         id_bahan_baku: data.id_bahan_baku,
@@ -365,19 +432,18 @@ const InventoryBahanBaku = () => {
         total_roll: Number(data.total_roll),
         total_yard: Number(data.total_yard),
         status: "ready",
+        category: data.category,
         remarks: data.remarks,
         is_active: 1,
+        id_size: data.size,
+        id_model: data.model,
       };
-
       InventoryBahanBakuToCuttersService.create(payload);
-
-      setSelectedTransferData(null);
-
-      // transferReset();
-
-      // setIsTransferOpen(false);
-
-      // window.location.reload();
+      //   // setSelectedTransferData(null);
+      console.log(payload);
+      //   // transferReset();
+      //   // setIsTransferOpen(false);
+      //   // window.location.reload();
     } catch (error) {
       console.error("Error:", error);
     }
@@ -474,6 +540,8 @@ const InventoryBahanBaku = () => {
                     readonly={field.readOnly}
                     name={field.name as Path<z.infer<typeof transferSchema>>}
                     errors={transferErrors}
+                    placeholder={field.placeholder as string}
+                    options={field.options}
                   />
                 </div>
               ))}

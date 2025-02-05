@@ -66,7 +66,7 @@ const ControllerInput = <T extends FieldValues>(
           {categories.map((_, index) => (
             <div key={index} className="flex items-center gap-4 mb-3">
               <Controller
-                name={name}
+                name={`${name}.${index}` as Path<T>}
                 control={control}
                 defaultValue={defaultValue}
                 render={({ field }: { field: FieldValues }) => (
