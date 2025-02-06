@@ -256,7 +256,7 @@ const InventoryBahanBaku = () => {
         placeholder: "Masukkan Remarks",
       },
     ],
-    [selectedTransferData]
+    [selectedTransferData, models, sizes, category]
   );
 
   const formatRupiah = (value: number | string) => {
@@ -423,7 +423,13 @@ const InventoryBahanBaku = () => {
   const handleTransferForm: SubmitHandler<z.infer<typeof transferSchema>> = (
     data
   ) => {
-    console.log(data);
+    const categoryList: Category[] = data.category.map((cat: string) => ({
+      id: Number(cat),
+      category: cat,
+      remarks: "",
+      is_active: 1,
+    }));
+    console.log(categoryList);
     try {
       const payload = {
         id_bahan_baku: data.id_bahan_baku,
@@ -432,18 +438,17 @@ const InventoryBahanBaku = () => {
         total_roll: Number(data.total_roll),
         total_yard: Number(data.total_yard),
         status: "ready",
-        category: data.category,
+        categories: categoryList.map((cat) => cat.id),
         remarks: data.remarks,
         is_active: 1,
-        id_size: data.size,
-        id_model: data.model,
+        id_size: Number(data.size),
+        id_model: Number(data.model),
       };
       InventoryBahanBakuToCuttersService.create(payload);
-      //   // setSelectedTransferData(null);
-      console.log(payload);
-      //   // transferReset();
-      //   // setIsTransferOpen(false);
-      //   // window.location.reload();
+      setSelectedTransferData(null);
+
+      setIsTransferOpen(false);
+      window.location.reload();
     } catch (error) {
       console.error("Error:", error);
     }

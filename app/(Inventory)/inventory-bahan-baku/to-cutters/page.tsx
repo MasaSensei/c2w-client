@@ -11,7 +11,10 @@ const ToCuttersPage = () => {
   const [data, setData] = useState<InventoryBahanBakuToCutters[]>([]);
   const headers = [
     "Date",
+    "Model",
     "Bahan",
+    "Size",
+    "Category",
     "Total Roll",
     "Total Yard",
     "Status",
@@ -39,7 +42,10 @@ const ToCuttersPage = () => {
   const formatData = (data: InventoryBahanBakuToCutters[]) => {
     return data.map((item) => ({
       Date: item.transfer_date || "-",
+      Model: item?.model?.model || "-",
       Bahan: item?.item || "-",
+      Size: item?.size?.size || "-",
+      Category: item?.category?.map((cat) => cat.category).join(", ") || "-",
       "Total Roll": item?.total_roll || 0,
       "Total Yard": item?.total_yard || 0,
       Status: item.status || "-",
