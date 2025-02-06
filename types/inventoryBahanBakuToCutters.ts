@@ -24,6 +24,7 @@ type Category = {
 };
 
 export type InventoryBahanBakuToCutters = {
+  id?: number;
   id_bahan_baku?: number;
   transfer_date?: string;
   item?: string;

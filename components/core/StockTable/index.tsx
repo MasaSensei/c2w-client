@@ -25,7 +25,7 @@ interface ReusableTableProps {
   headers: string[];
   rows: string[][];
   detail?: string[][][];
-  onEdit?: (rowIndex: number) => void; // onEdit sekarang menerima rowIndex
+  onEdit?: (rowIndex: number) => void;
   onDelete?: (rowIndex: number) => void;
   onEditShow?: boolean;
   onDeleteShow?: boolean;
@@ -127,24 +127,26 @@ const TableBody: React.FC<TableBodyProps> = ({
             ))}
             <td className="relative p-4 border-b align-top">
               <div className="flex items-center justify-center gap-8 py-1">
-                <button
-                  type="button"
-                  onClick={() => handleToggle(rowIndex)}
-                  className="text-gray-700 px-2 hover:opacity-50 transition duration-300"
-                >
-                  <svg
-                    stroke="currentColor"
-                    fill="currentColor"
-                    strokeWidth="0"
-                    viewBox="0 0 448 512"
-                    height="12"
-                    width="12"
-                    className={`${openRows[rowIndex] ? "rotate-180" : ""}`}
-                    xmlns="http://www.w3.org/2000/svg"
+                {detail[rowIndex] && detail[rowIndex].length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => handleToggle(rowIndex)}
+                    className="text-gray-700 px-2 hover:opacity-50 transition duration-300"
                   >
-                    <path d="M207.029 381.476L12.686 187.132c-9.373-9.373-9.373-24.569 0-33.941l22.667-22.667c9.357-9.357 24.522-9.375 33.901-.04L224 284.505l154.745-154.021c9.379-9.335 24.544-9.317 33.901.04l22.667 22.667c9.373 9.373 9.373 24.569 0 33.941L240.971 381.476c-9.373 9.372-24.569 9.372-33.942 0z"></path>
-                  </svg>
-                </button>
+                    <svg
+                      stroke="currentColor"
+                      fill="currentColor"
+                      strokeWidth="0"
+                      viewBox="0 0 448 512"
+                      height="12"
+                      width="12"
+                      className={`${openRows[rowIndex] ? "rotate-180" : ""}`}
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path d="M207.029 381.476L12.686 187.132c-9.373-9.373-9.373-24.569 0-33.941l22.667-22.667c9.357-9.357 24.522-9.375 33.901-.04L224 284.505l154.745-154.021c9.379-9.335 24.544-9.317 33.901.04l22.667 22.667c9.373 9.373 9.373 24.569 0 33.941L240.971 381.476c-9.373 9.372-24.569 9.372-33.942 0z"></path>
+                    </svg>
+                  </button>
+                )}
                 <div className="flex items-center gap-3">
                   {onEditShow && (
                     <button
@@ -193,20 +195,22 @@ const TableBody: React.FC<TableBodyProps> = ({
               </div>
             </td>
           </tr>
-          {openRows[rowIndex] && (
-            <tr className="border-t">
-              <td colSpan={10} className="p-4 bg-white">
-                <div className="border bg-[#F6F7F9] p-4 rounded">
-                  <h4 className="text-sm font-semibold text-dark">
-                    Roll Items:
-                  </h4>
-                  <div className="w-fit mt-4 border border-gray-200 rounded-lg">
-                    <DetailTable rows={detail[rowIndex] || []} />
+          {detail[rowIndex] &&
+            detail[rowIndex].length > 0 &&
+            openRows[rowIndex] && (
+              <tr className="border-t">
+                <td colSpan={10} className="p-4 bg-white">
+                  <div className="border bg-[#F6F7F9] p-4 rounded">
+                    <h4 className="text-sm font-semibold text-dark">
+                      Roll Items:
+                    </h4>
+                    <div className="w-fit mt-4 border border-gray-200 rounded-lg">
+                      <DetailTable rows={detail[rowIndex] || []} />
+                    </div>
                   </div>
-                </div>
-              </td>
-            </tr>
-          )}
+                </td>
+              </tr>
+            )}
         </React.Fragment>
       ))}
     </tbody>
