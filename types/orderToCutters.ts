@@ -5,6 +5,12 @@ type Details = {
   roll?: number;
   total_yard?: number;
   cost_per_yard?: number;
+  sub_total?: number;
+  status?: string;
+  remarks?: string;
+  inventory_bahan_baku_to_cutters?: {
+    status: string;
+  };
 };
 
 export type OrderToCutters = {

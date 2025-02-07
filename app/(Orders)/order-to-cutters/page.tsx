@@ -10,6 +10,7 @@ import { OrderToCutters } from "@/types/orderToCutters";
 
 const OrderToCutterPage = () => {
   const [datas, setDatas] = useState<OrderToCutters[]>([]);
+  const [detailsTable, setDetailsTable] = useState<string[][]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const headers = [
     "Order Date",
@@ -33,13 +34,63 @@ const OrderToCutterPage = () => {
         console.error("Error fetching data:", err);
         setDatas([]);
       }
-      fetchData();
     };
+    fetchData();
   }, []);
 
+  const format = (date: Date) => {
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  const formatData = (data: OrderToCutters[]) => {
+    return data.map((item) => ({
+      "Order Date": item.order_date ? format(new Date(item.order_date)) : "-",
+      "Due Date": item.due_date ? format(new Date(item.due_date)) : "-",
+      "Invoice No.": item.invoice_number || "-",
+      "Total Items": item.details?.length || 0,
+      Status: item.status || "-",
+      Remarks: item.remarks || "-",
+    }));
+  };
   const handleAdd = () => {
     setIsAdding(!isAdding);
   };
+
+  const formatRupiah = (value: number | string) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(Number(value) || 0);
+  };
+
+  const formatDetailsData = (data: OrderToCutters[]) => {
+    return data.map((item) => [
+      item?.details?.map((detail) => detail?.product_code) || "-",
+      item?.details?.map((detail) => detail?.roll) || 0,
+      item?.details?.map((detail) => detail?.total_yard) || 0,
+      item?.details?.map((detail) =>
+        formatRupiah(detail?.cost_per_yard?.toString() || "-")
+      ) || 0,
+      item?.details?.map((detail) =>
+        formatRupiah(detail?.sub_total?.toString() || "-")
+      ) || 0,
+      item?.details?.map(
+        (detail) => detail?.inventory_bahan_baku_to_cutters?.status
+      ) || "-",
+      item?.details?.map((detail) => detail?.remarks) || "-",
+    ]);
+  };
+
+  useEffect(() => {
+    if (!datas?.length) return;
+
+    const detailsTable = formatDetailsData(datas);
+    setDetailsTable(detailsTable as string[][]);
+  }, [datas]);
   return (
     <Layouts.Main>
       <Fragments.HeaderWithActions onAdd={handleAdd} title="Order To Cutters" />
@@ -54,7 +105,18 @@ const OrderToCutterPage = () => {
             )} */}
           <Cores.Table
             headers={headers}
-            data={[]}
+            data={formatData(datas)}
+            details={true}
+            detailsHeaders={[
+              "Product Code",
+              "Total Roll",
+              "Total Yards",
+              "Cost per Yard",
+              "Sub Total",
+              "Status",
+              "Remarks",
+            ]}
+            detailsRows={detailsTable}
             // data={formatData(data)}
             // onEdit={handleEdit}
             // onDelete={handleDelete}
