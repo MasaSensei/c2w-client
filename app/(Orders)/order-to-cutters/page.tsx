@@ -68,29 +68,36 @@ const OrderToCutterPage = () => {
   };
 
   const formatDetailsData = (data: OrderToCutters[]) => {
-    return data.map((item) => [
-      item?.details?.map((detail) => detail?.product_code) || "-",
-      item?.details?.map((detail) => detail?.roll) || 0,
-      item?.details?.map((detail) => detail?.total_yard) || 0,
-      item?.details?.map((detail) =>
-        formatRupiah(detail?.cost_per_yard?.toString() || "-")
-      ) || 0,
-      item?.details?.map((detail) =>
-        formatRupiah(detail?.sub_total?.toString() || "-")
-      ) || 0,
-      item?.details?.map(
-        (detail) => detail?.inventory_bahan_baku_to_cutters?.status
-      ) || "-",
-      item?.details?.map((detail) => detail?.remarks) || "-",
-    ]);
+    const formattedDetails: string[][] = [];
+
+    data.forEach((item) => {
+      if (!item.details?.length) {
+        formattedDetails.push(["-", "-", "-", "-", "-", "-", "-"]);
+      } else {
+        item.details.forEach((detail) => {
+          formattedDetails.push([
+            detail.product_code || "-",
+            detail.roll?.toString() || "0",
+            detail.total_yard?.toString() || "0",
+            formatRupiah(detail.cost_per_yard?.toString() || "0"),
+            formatRupiah(detail.sub_total?.toString() || "0"),
+            detail.inventory_bahan_baku_to_cutters?.status || "-",
+            detail.remarks || "-",
+          ]);
+        });
+      }
+    });
+
+    return formattedDetails;
   };
 
   useEffect(() => {
     if (!datas?.length) return;
 
     const detailsTable = formatDetailsData(datas);
-    setDetailsTable(detailsTable as string[][]);
+    setDetailsTable(detailsTable);
   }, [datas]);
+
   return (
     <Layouts.Main>
       <Fragments.HeaderWithActions onAdd={handleAdd} title="Order To Cutters" />

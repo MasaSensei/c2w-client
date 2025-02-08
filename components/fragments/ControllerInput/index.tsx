@@ -119,6 +119,12 @@ const ControllerInput = <T extends FieldValues>(
                     </SelectItem>
                   ))}
                 </Cores.Select>
+              ) : type === "textarea" ? (
+                <Cores.Textarea
+                  {...field}
+                  placeholder={placeholder}
+                  defaultValue={defaultValue}
+                />
               ) : (
                 <Cores.Input
                   {...field}

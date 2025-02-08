@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import {
@@ -8,6 +9,7 @@ import {
   PaginationPrevious,
   PaginationNext,
 } from "@/components/ui/pagination";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface TableProps {
   headers: string[];
@@ -20,17 +22,36 @@ interface TableProps {
   detailsHeaders?: string[];
   detailsTitle?: string;
   detailsRows?: string[][];
+  overflow?: string;
+  checkbox?: boolean;
 }
 
 const TableDetails = ({
   headers,
   rows,
   title,
+  chekbox,
 }: {
   headers: string[];
   rows: string[][];
   title: string;
+  chekbox?: boolean;
 }) => {
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
+  const allSelected = chekbox && selectedRows.length === rows.length;
+
+  // Handler untuk checkbox di header (Select All)
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedRows(checked ? rows.map((_, index) => index) : []);
+  };
+
+  // Handler untuk checkbox di tiap baris
+  const handleSelectRow = (index: number, checked: boolean) => {
+    setSelectedRows((prev) =>
+      checked ? [...prev, index] : prev.filter((i) => i !== index)
+    );
+  };
+
   return (
     <tr>
       <td colSpan={7} className="p-4 border-b">
@@ -40,6 +61,14 @@ const TableDetails = ({
             <table className="w-full text-xs text-left border-collapse rounded-lg bg-white overflow-hidden">
               <thead className="border-b bg-[#F6F7F9] text-[#758090]">
                 <tr>
+                  {chekbox && (
+                    <th className="py-2 px-4 font-normal">
+                      <Checkbox
+                        checked={allSelected}
+                        onCheckedChange={handleSelectAll}
+                      />
+                    </th>
+                  )}
                   {headers.map((header, index) => (
                     <th
                       key={index}
@@ -54,6 +83,16 @@ const TableDetails = ({
               <tbody>
                 {rows.map((row, rowIndex) => (
                   <tr key={rowIndex}>
+                    {chekbox && (
+                      <td className="px-4 py-3">
+                        <Checkbox
+                          checked={selectedRows.includes(rowIndex)}
+                          onCheckedChange={(checked) =>
+                            handleSelectRow(rowIndex, checked as boolean)
+                          }
+                        />
+                      </td>
+                    )}
                     {row.map((cell, cellIndex) => (
                       <td key={cellIndex} className="px-4 py-3">
                         {cell}
@@ -81,6 +120,8 @@ const Table = ({
   detailsHeaders,
   detailsTitle,
   detailsRows,
+  overflow,
+  checkbox,
 }: TableProps) => {
   const [search, setSearch] = useState<Record<string, string>>({});
   const [sortedData, setSortedData] = useState(data);
@@ -172,12 +213,23 @@ const Table = ({
       ...prev,
       [index]: !prev[index],
     }));
+
+    console.log("Row clicked:", index);
+    console.log("Details Rows after click:", detailsRows);
+
     toggleDetails();
   };
 
+  console.log("Details Rows for index", onClickedRowIndex, detailsRows);
+
   return (
-    <div className="flex flex-col w-full bg-[#F6F7F9]">
-      <table className="min-w-full rounded-t-lg text-left bg-[#F6F7F9] text-[12px] font-light">
+    <div className={cn("flex flex-col w-full bg-[#F6F7F9]", overflow)}>
+      <table
+        className={cn(
+          "min-w-full rounded-t-lg text-left bg-[#F6F7F9] text-[12px] font-light",
+          overflow
+        )}
+      >
         <thead className="border-b text-[#758090]">
           <tr>
             {headers.map((header, index) => (
@@ -346,6 +398,7 @@ const Table = ({
                     headers={detailsHeaders?.flat() || []}
                     rows={detailsRows ? [detailsRows[rowIndex]] : []}
                     title={detailsTitle || ""}
+                    chekbox={checkbox}
                   />
                 )}
               </React.Fragment>
