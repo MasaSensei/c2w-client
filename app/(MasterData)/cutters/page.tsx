@@ -19,7 +19,7 @@ const formSchema = z.object({
 
 const CuttersPage = () => {
   const [data, setData] = useState<Worker[]>([]);
-  const [detailsTable, setDetailsTable] = useState<string[][]>([]);
+  const [detailsTable, setDetailsTable] = useState<string[][][]>([]);
   const [selectedData, setSelectedData] = useState<Worker | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -93,7 +93,8 @@ const CuttersPage = () => {
     if (!data?.length) return;
 
     const detailsTable = formatDataNew(data);
-    setDetailsTable(detailsTable);
+    setDetailsTable(detailsTable as string[][][]);
+    console.log(detailsTable);
   }, [data]);
 
   const formatData = (data: Worker[]) => {
@@ -113,14 +114,12 @@ const CuttersPage = () => {
   };
 
   const formatDataNew = (data: Worker[]) => {
-    return data.map((item) => [
-      item?.prices?.map((price) => price.material_category)?.join(", ") || "-",
-      formatRupiah(
-        Number(
-          item?.prices?.map((price) => price.cost_per_yard)?.join(", ") || 0
-        )
-      ),
-    ]);
+    return data.map((worker) =>
+      worker?.prices?.map((price) => [
+        price.material_category || "-",
+        formatRupiah(Number(price.cost_per_yard) || 0),
+      ])
+    );
   };
 
   const handleModal = () => {

@@ -21,9 +21,10 @@ interface TableProps {
   details?: boolean;
   detailsHeaders?: string[];
   detailsTitle?: string;
-  detailsRows?: string[][];
+  detailsRows?: string[][][];
   overflow?: string;
   checkbox?: boolean;
+  onSelectionChange?: (selectedRows: string[][]) => void;
 }
 
 const TableDetails = ({
@@ -31,25 +32,52 @@ const TableDetails = ({
   rows,
   title,
   chekbox,
+  onSelectionChange, // Tambahkan prop untuk mengirim data ke parent
 }: {
   headers: string[];
-  rows: string[][];
+  rows: string[][][];
   title: string;
   chekbox?: boolean;
+  onSelectionChange?: (selectedRows: string[][]) => void;
 }) => {
-  const [selectedRows, setSelectedRows] = useState<number[]>([]);
-  const allSelected = chekbox && selectedRows.length === rows.length;
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const allSelected = chekbox && selectedRows.length === rows.flat().length;
 
-  // Handler untuk checkbox di header (Select All)
   const handleSelectAll = (checked: boolean) => {
-    setSelectedRows(checked ? rows.map((_, index) => index) : []);
+    if (checked) {
+      const allRowIds = rows.flatMap((group, groupIndex) =>
+        group.map((_, rowIndex) => `${groupIndex}-${rowIndex}`)
+      );
+      setSelectedRows(allRowIds);
+      onSelectionChange?.(rows.flat());
+    } else {
+      setSelectedRows([]);
+      onSelectionChange?.([]);
+    }
   };
 
-  // Handler untuk checkbox di tiap baris
-  const handleSelectRow = (index: number, checked: boolean) => {
+  const handleSelectRow = (
+    groupIndex: number,
+    rowIndex: number,
+    checked: boolean
+  ) => {
+    const rowId = `${groupIndex}-${rowIndex}`;
     setSelectedRows((prev) =>
-      checked ? [...prev, index] : prev.filter((i) => i !== index)
+      checked ? [...prev, rowId] : prev.filter((id) => id !== rowId)
     );
+
+    // Ambil hanya baris yang terpilih
+    const selectedData = checked
+      ? [...selectedRows, rowId]
+      : selectedRows.filter((id) => id !== rowId);
+
+    // Kirim data yang sesuai ke parent
+    const selectedDetails = selectedData.map((id) => {
+      const [gIndex, rIndex] = id.split("-").map(Number);
+      return rows[gIndex][rIndex];
+    });
+
+    onSelectionChange?.(selectedDetails);
   };
 
   return (
@@ -81,24 +109,35 @@ const TableDetails = ({
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row, rowIndex) => (
-                  <tr key={rowIndex}>
-                    {chekbox && (
-                      <td className="px-4 py-3">
-                        <Checkbox
-                          checked={selectedRows.includes(rowIndex)}
-                          onCheckedChange={(checked) =>
-                            handleSelectRow(rowIndex, checked as boolean)
-                          }
-                        />
-                      </td>
-                    )}
-                    {row.map((cell, cellIndex) => (
-                      <td key={cellIndex} className="px-4 py-3">
-                        {cell}
-                      </td>
-                    ))}
-                  </tr>
+                {rows.map((group, groupIndex) => (
+                  <React.Fragment key={groupIndex}>
+                    {group.map((row, rowIndex) => {
+                      const rowId = `${groupIndex}-${rowIndex}`;
+                      return (
+                        <tr key={rowId}>
+                          {chekbox && (
+                            <td className="px-4 py-3 align-top">
+                              <Checkbox
+                                checked={selectedRows.includes(rowId)}
+                                onCheckedChange={(checked) =>
+                                  handleSelectRow(
+                                    groupIndex,
+                                    rowIndex,
+                                    checked as boolean
+                                  )
+                                }
+                              />
+                            </td>
+                          )}
+                          {row.map((cell, cellIndex) => (
+                            <td key={cellIndex} className="px-4 py-3 border-b">
+                              {cell}
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
@@ -122,6 +161,7 @@ const Table = ({
   detailsRows,
   overflow,
   checkbox,
+  onSelectionChange,
 }: TableProps) => {
   const [search, setSearch] = useState<Record<string, string>>({});
   const [sortedData, setSortedData] = useState(data);
@@ -396,9 +436,10 @@ const Table = ({
                 {details && onClickedRowIndex[rowIndex] && (
                   <TableDetails
                     headers={detailsHeaders?.flat() || []}
-                    rows={detailsRows ? [detailsRows[rowIndex]] : []}
+                    rows={detailsRows ? [[...detailsRows[rowIndex]]] : []}
                     title={detailsTitle || ""}
                     chekbox={checkbox}
+                    onSelectionChange={onSelectionChange}
                   />
                 )}
               </React.Fragment>

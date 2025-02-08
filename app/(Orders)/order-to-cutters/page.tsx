@@ -10,7 +10,7 @@ import { OrderToCutters } from "@/types/orderToCutters";
 
 const OrderToCutterPage = () => {
   const [datas, setDatas] = useState<OrderToCutters[]>([]);
-  const [detailsTable, setDetailsTable] = useState<string[][]>([]);
+  const [detailsTable, setDetailsTable] = useState<string[][][]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const headers = [
     "Order Date",
@@ -68,34 +68,25 @@ const OrderToCutterPage = () => {
   };
 
   const formatDetailsData = (data: OrderToCutters[]) => {
-    const formattedDetails: string[][] = [];
-
-    data.forEach((item) => {
-      if (!item.details?.length) {
-        formattedDetails.push(["-", "-", "-", "-", "-", "-", "-"]);
-      } else {
-        item.details.forEach((detail) => {
-          formattedDetails.push([
-            detail.product_code || "-",
-            detail.roll?.toString() || "0",
-            detail.total_yard?.toString() || "0",
-            formatRupiah(detail.cost_per_yard?.toString() || "0"),
-            formatRupiah(detail.sub_total?.toString() || "0"),
-            detail.inventory_bahan_baku_to_cutters?.status || "-",
-            detail.remarks || "-",
-          ]);
-        });
-      }
-    });
-
-    return formattedDetails;
+    return data.map((item) =>
+      item?.details?.map((detail) => [
+        detail?.product_code || "-",
+        detail?.roll,
+        detail?.total_yard,
+        formatRupiah(detail?.cost_per_yard?.toString() || "-"),
+        formatRupiah(detail?.sub_total?.toString() || "-"),
+        detail?.inventory_bahan_baku_to_cutters?.status,
+        detail?.remarks,
+      ])
+    );
   };
 
   useEffect(() => {
     if (!datas?.length) return;
 
     const detailsTable = formatDetailsData(datas);
-    setDetailsTable(detailsTable);
+    console.log();
+    setDetailsTable(detailsTable as string[][][]);
   }, [datas]);
 
   return (

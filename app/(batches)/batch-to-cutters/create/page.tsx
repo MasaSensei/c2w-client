@@ -19,7 +19,35 @@ const formSchema = z.object({
 const CreateBatchToCuttersPage = () => {
   const [activeTab, setActiveTab] = useState(1);
   const [orderToCutters, setOrderToCutters] = useState<OrderToCutters[]>([]);
-  const [detailsTable, setDetailsTable] = useState<string[][]>([]);
+  const [detailsTable, setDetailsTable] = useState<string[][][]>([]);
+  const [selectedDetails, setSelectedDetails] = useState<string[][]>([]);
+
+  const handleSelectionChange = (selectedRows: string[][]) => {
+    setSelectedDetails(() => {
+      const updatedMap = new Map<string, string[]>(); // Key: product_code
+
+      // Masukkan data yang masih terpilih
+      selectedRows.forEach((row) => {
+        const productCode = row[0];
+        const roll = Number(row[1]);
+        const totalYard = Number(row[2]);
+
+        if (updatedMap.has(productCode)) {
+          // Jika sudah ada, update jumlah roll dan total_yard
+          const existingRow = updatedMap.get(productCode)!;
+          existingRow[1] = (Number(existingRow[1]) + roll).toString();
+          existingRow[2] = (Number(existingRow[2]) + totalYard).toString();
+        } else {
+          // Jika belum ada, tambahkan data baru
+          updatedMap.set(productCode, [...row]);
+        }
+      });
+
+      const mergedData = Array.from(updatedMap.values());
+      console.log("✅ Merged Data for Table:", mergedData); // Debugging
+      return mergedData;
+    });
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -112,28 +140,24 @@ const CreateBatchToCuttersPage = () => {
   };
 
   const formatDetailsData = (data: OrderToCutters[]) => {
-    return data.map((item) => [
-      item?.details?.map((detail) => detail?.product_code) || "-",
-      item?.details?.map((detail) => detail?.roll) || 0,
-      item?.details?.map((detail) => detail?.total_yard) || 0,
-      item?.details?.map((detail) =>
-        formatRupiah(detail?.cost_per_yard?.toString() || "-")
-      ) || 0,
-      item?.details?.map((detail) =>
-        formatRupiah(detail?.sub_total?.toString() || "-")
-      ) || 0,
-      item?.details?.map(
-        (detail) => detail?.inventory_bahan_baku_to_cutters?.status
-      ) || "-",
-      item?.details?.map((detail) => detail?.remarks) || "-",
-    ]);
+    return data?.map((item) =>
+      item?.details?.map((detail) => [
+        detail?.product_code || "-",
+        detail?.roll,
+        detail?.total_yard,
+        formatRupiah(detail?.cost_per_yard?.toString() || "-"),
+        formatRupiah(detail?.sub_total?.toString() || "-"),
+        detail?.inventory_bahan_baku_to_cutters?.status,
+        detail?.remarks,
+      ])
+    );
   };
 
   useEffect(() => {
     if (!orderToCutters?.length) return;
 
     const detailsTable = formatDetailsData(orderToCutters);
-    setDetailsTable(detailsTable as string[][]);
+    setDetailsTable(detailsTable as string[][][]);
   }, [orderToCutters]);
 
   const steps = [
@@ -219,13 +243,19 @@ const CreateBatchToCuttersPage = () => {
                   ]}
                   detailsRows={detailsTable}
                   checkbox={true}
+                  onSelectionChange={handleSelectionChange}
                 />
               </div>
             </div>
             <div className="border bg-white rounded-lg p-6 col-span-2 h-fit">
               <h2 className="text-xl font-semibold text-gray-800">Summary</h2>
               <div className="text-sm my-4 grid space-y-2">
-                <div>No Item Selected</div>
+                {selectedDetails?.map((item, index) => (
+                  <div key={index}>
+                    <p className="text-xs text-gray-500">{item[1]} rolls</p>
+                    <p>{item[0]}</p>
+                  </div>
+                ))}
               </div>
               <button className="mt-2 w-full px-4 py-2 bg-slate-900 text-white text-sm rounded shadow hover:opacity-50 transition ease-in-out duration-300">
                 Next
@@ -262,7 +292,10 @@ const CreateBatchToCuttersPage = () => {
                   <section className="flex-1 overflow-auto w-full">
                     <div className="bg-neutral-200 border border-gray-200 rounded-lg w-full relative">
                       <Cores.Table
-                        data={[]}
+                        data={selectedDetails.map((item) => ({
+                          "Product Code": item[0],
+                          "Total Qty": item[1],
+                        }))}
                         headers={["Product Code", "Total Qty"]}
                       />
                     </div>
