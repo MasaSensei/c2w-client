@@ -41,20 +41,6 @@ const TableDetails = ({
   onSelectionChange?: (selectedRows: string[][]) => void;
 }) => {
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const allSelected = chekbox && selectedRows.length === rows.flat().length;
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      const allRowIds = rows.flatMap((group, groupIndex) =>
-        group.map((_, rowIndex) => `${groupIndex}-${rowIndex}`)
-      );
-      setSelectedRows(allRowIds);
-      onSelectionChange?.(rows.flat());
-    } else {
-      setSelectedRows([]);
-      onSelectionChange?.([]);
-    }
-  };
 
   const handleSelectRow = (
     groupIndex: number,
@@ -89,14 +75,7 @@ const TableDetails = ({
             <table className="w-full text-xs text-left border-collapse rounded-lg bg-white overflow-hidden">
               <thead className="border-b bg-[#F6F7F9] text-[#758090]">
                 <tr>
-                  {chekbox && (
-                    <th className="py-2 px-4 font-normal">
-                      <Checkbox
-                        checked={allSelected}
-                        onCheckedChange={handleSelectAll}
-                      />
-                    </th>
-                  )}
+                  {chekbox && <th className="py-2 px-4 font-normal"></th>}
                   {headers.map((header, index) => (
                     <th
                       key={index}

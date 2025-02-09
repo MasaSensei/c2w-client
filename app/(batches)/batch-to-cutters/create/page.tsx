@@ -10,10 +10,15 @@ import { Cores } from "@/components/core";
 import { OrderToCutters } from "@/types/orderToCutters";
 import { OrderToCuttersService } from "@/services/orderToCutters.service";
 import StepNavigation from "./stepNavigation";
+import { BatchService } from "@/services/batch.service";
 
 const formSchema = z.object({
   batch_no: z.string().min(1, { message: "Batch No is required" }),
   status: z.string().min(1, { message: "Status is required" }),
+  start_date: z.string().min(1, { message: "Order Date is required" }),
+  end_date: z.string().min(1, { message: "Due Date is required" }),
+  order_no: z.string().min(1, { message: "Order No is required" }),
+  remarks: z.string(),
 });
 
 const CreateBatchToCuttersPage = () => {
@@ -23,29 +28,61 @@ const CreateBatchToCuttersPage = () => {
   const [selectedDetails, setSelectedDetails] = useState<string[][]>([]);
 
   const handleSelectionChange = (selectedRows: string[][]) => {
-    setSelectedDetails(() => {
-      const updatedMap = new Map<string, string[]>(); // Key: product_code
+    const mergedMap = new Map<string, string[]>(); // Key: product_code
 
-      // Masukkan data yang masih terpilih
-      selectedRows.forEach((row) => {
-        const productCode = row[0];
-        const roll = Number(row[1]);
-        const totalYard = Number(row[2]);
+    selectedRows.forEach((row) => {
+      const productCode = row[0];
+      const roll = Number(row[1]);
+      const totalYard = Number(row[2]);
+      const costPerYard = Number(row[3].replace(/[^\d]/g, ""));
+      const subTotal = Number(row[4].replace(/[^\d]/g, ""));
 
-        if (updatedMap.has(productCode)) {
-          // Jika sudah ada, update jumlah roll dan total_yard
-          const existingRow = updatedMap.get(productCode)!;
-          existingRow[1] = (Number(existingRow[1]) + roll).toString();
-          existingRow[2] = (Number(existingRow[2]) + totalYard).toString();
+      if (mergedMap.has(productCode)) {
+        const existingRow = mergedMap.get(productCode)!;
+        existingRow[1] = (Number(existingRow[1]) + roll).toString();
+        existingRow[2] = (Number(existingRow[2]) + totalYard).toString();
+        existingRow[3] = (Number(existingRow[3]) + costPerYard).toString();
+        existingRow[4] = (Number(existingRow[4]) + subTotal).toString();
+      } else {
+        mergedMap.set(productCode, [...row]);
+      }
+    });
+
+    const finalSelectedRows = Array.from(
+      mergedMap.values().map((row) => [...row])
+    );
+    console.log("Final Selected Rows:", finalSelectedRows);
+
+    setSelectedDetails((prevSelected) => {
+      if (
+        finalSelectedRows.every((row) => row[1] === "0" && row[2] === "0.00")
+      ) {
+        return [];
+      }
+
+      const newSelectedRows = [...prevSelected];
+      finalSelectedRows.forEach((row) => {
+        const index = newSelectedRows.findIndex((r) => r[0] === row[0]);
+        if (index !== -1) {
+          if (row[1] === "0" && row[2] === "0.00") {
+            newSelectedRows.splice(index, 1);
+          } else {
+            newSelectedRows[index] = row;
+          }
         } else {
-          // Jika belum ada, tambahkan data baru
-          updatedMap.set(productCode, [...row]);
+          if (row[1] !== "0" || row[2] !== "0.00") {
+            newSelectedRows.push(row);
+          }
         }
       });
-
-      const mergedData = Array.from(updatedMap.values());
-      console.log("✅ Merged Data for Table:", mergedData); // Debugging
-      return mergedData;
+      return newSelectedRows.filter((row) => {
+        const productCode = row[0];
+        const finalRow = finalSelectedRows.find((r) => r[0] === productCode);
+        return (
+          (finalRow && (finalRow[1] !== "0" || finalRow[2] !== "0.00")) ||
+          prevSelected.includes(row)
+        );
+      });
     });
   };
 
@@ -86,16 +123,27 @@ const CreateBatchToCuttersPage = () => {
 
   const {
     control,
-    register,
-    handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       batch_no: "",
       status: "New",
+      start_date: "",
+      end_date: "",
+      remarks: "",
     },
   });
+
+  const fieldsValues = watch();
+
+  const remarksValue = watch("remarks");
+  console.log("Current remarks:", remarksValue);
+
+  const handleNextTab = () => {
+    setActiveTab(activeTab + 1);
+  };
 
   const fields = [
     {
@@ -127,7 +175,7 @@ const CreateBatchToCuttersPage = () => {
       label: "Remarks",
       name: "remarks",
       placeholder: "Remarks",
-      type: "textarea",
+      type: "text",
     },
   ];
 
@@ -166,6 +214,39 @@ const CreateBatchToCuttersPage = () => {
     { id: 3, label: "Summary" },
   ];
 
+  const formatSelectedDetails = () => {
+    return selectedDetails.map((item) => ({
+      product_code: item[0], // Gantilah dengan ID yang sesuai dari database jika ada
+      reference_type: "cutters", // Sesuaikan dengan jenis yang sesuai
+      quantity: Number(item[1]),
+      total_yard: Number(item[2]),
+      cost_per_yard: parseFloat(item[3].replace("Rp", "").replace(/\D/g, "")), // Hapus semua non-angka, kecuali angka
+      sub_total: parseFloat(item[4].replace("Rp", "").replace(/\D/g, "")), // Sama seperti di atas
+      remarks: item[6],
+      is_active: true,
+    }));
+  };
+
+  const handleSubmitBatch = async () => {
+    try {
+      const payload = {
+        batch_number: fieldsValues.batch_no,
+        start_date: fieldsValues.start_date,
+        end_date: fieldsValues.end_date,
+        status: "On Progress",
+        remarks: fieldsValues.remarks || "-",
+        is_active: true,
+        details: formatSelectedDetails(),
+      };
+
+      await BatchService.create(payload);
+      window.location.href = "/batch-to-cutters";
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setOrderToCutters([]);
+    }
+  };
+
   return (
     <Layouts.Main>
       <Fragments.HeaderWithActions title="Create Batch To Cutters" />
@@ -189,7 +270,7 @@ const CreateBatchToCuttersPage = () => {
                   <div
                     key={index}
                     className={`mb-4 ${
-                      field.type === "textarea" && "col-span-2"
+                      field.name === "remarks" && "col-span-2"
                     }`}
                   >
                     <Fragments.ControllerInput
@@ -202,7 +283,8 @@ const CreateBatchToCuttersPage = () => {
                   </div>
                 ))}
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleNextTab}
                   className="bg-green-500 col-span-2 text-white hover:opacity-50 transition duration-300 px-3 py-1.5 rounded"
                 >
                   Next
@@ -257,7 +339,11 @@ const CreateBatchToCuttersPage = () => {
                   </div>
                 ))}
               </div>
-              <button className="mt-2 w-full px-4 py-2 bg-slate-900 text-white text-sm rounded shadow hover:opacity-50 transition ease-in-out duration-300">
+              <button
+                type="button"
+                onClick={handleNextTab}
+                className="mt-2 w-full px-4 py-2 bg-slate-900 text-white text-sm rounded shadow hover:opacity-50 transition ease-in-out duration-300"
+              >
                 Next
               </button>
             </div>
@@ -277,7 +363,7 @@ const CreateBatchToCuttersPage = () => {
                         Batch No:
                       </span>
                     </p>
-                    <p>-</p>
+                    <p>{fieldsValues.batch_no}</p>
                   </div>
                   <div>
                     <p>
@@ -286,6 +372,30 @@ const CreateBatchToCuttersPage = () => {
                       </span>
                     </p>
                     <p>New</p>
+                  </div>
+                  <div>
+                    <p>
+                      <span className="font-semibold text-gray-800">
+                        Start Date:
+                      </span>
+                    </p>
+                    <p>{fieldsValues.start_date}</p>
+                  </div>
+                  <div>
+                    <p>
+                      <span className="font-semibold text-gray-800">
+                        End Date:
+                      </span>
+                    </p>
+                    <p>{fieldsValues.end_date}</p>
+                  </div>
+                  <div>
+                    <p>
+                      <span className="font-semibold text-gray-800">
+                        Remarks
+                      </span>
+                    </p>
+                    <p>{fieldsValues.remarks} </p>
                   </div>
                 </div>
                 <div className="p-6">
@@ -302,6 +412,15 @@ const CreateBatchToCuttersPage = () => {
                   </section>
                 </div>
               </div>
+            </div>
+            <div className="flex justify-center mt-4 mb-4">
+              <button
+                type="submit"
+                onClick={handleSubmitBatch}
+                className="bg-slate-900 text-white hover:opacity-50 transition duration-300 px-3 py-1.5 rounded"
+              >
+                Submit
+              </button>
             </div>
           </div>
         )}
