@@ -190,6 +190,7 @@ const CreateBatchToCuttersPage = () => {
   const formatDetailsData = (data: OrderToCutters[]) => {
     return data?.map((item) =>
       item?.details?.map((detail) => [
+        detail?.id?.toString() || "-",
         detail?.product_code || "-",
         detail?.roll,
         detail?.total_yard,
@@ -236,11 +237,17 @@ const CreateBatchToCuttersPage = () => {
         status: "On Progress",
         remarks: fieldsValues.remarks || "-",
         is_active: true,
-        details: formatSelectedDetails(),
+        details: {
+          id: selectedDetails.map((item) =>
+            item.map((item) => item.toString().slice(0, 1))
+          ),
+          ...formatSelectedDetails(),
+        },
       };
 
-      await BatchService.create(payload);
-      window.location.href = "/batch-to-cutters";
+      console.log(payload);
+      // await BatchService.create(payload);
+      // window.location.href = "/batch-to-cutters";
     } catch (err) {
       console.error("Error fetching data:", err);
       setOrderToCutters([]);
@@ -295,7 +302,7 @@ const CreateBatchToCuttersPage = () => {
         )}
         {activeTab === 2 && (
           <div className="mb-6 mx-4 grid grid-cols-10 gap-4">
-            <div className="col-span-8 space-y-4">
+            <div className="col-span-12 space-y-4">
               <div className="border space-y-4 bg-white rounded-lg p-6">
                 <div className="w-full flex justify-between items-center">
                   <h2 className="text-xl font-semibold text-gray-800">
@@ -315,6 +322,7 @@ const CreateBatchToCuttersPage = () => {
                   data={formatData(orderToCutters)}
                   details={true}
                   detailsHeaders={[
+                    "ID",
                     "Product Code",
                     "Total Roll",
                     "Total Yards",
@@ -327,17 +335,6 @@ const CreateBatchToCuttersPage = () => {
                   checkbox={true}
                   onSelectionChange={handleSelectionChange}
                 />
-              </div>
-            </div>
-            <div className="border bg-white rounded-lg p-6 col-span-2 h-fit">
-              <h2 className="text-xl font-semibold text-gray-800">Summary</h2>
-              <div className="text-sm my-4 grid space-y-2">
-                {selectedDetails?.map((item, index) => (
-                  <div key={index}>
-                    <p className="text-xs text-gray-500">{item[1]} rolls</p>
-                    <p>{item[0]}</p>
-                  </div>
-                ))}
               </div>
               <button
                 type="button"
@@ -403,10 +400,10 @@ const CreateBatchToCuttersPage = () => {
                     <div className="bg-neutral-200 border border-gray-200 rounded-lg w-full relative">
                       <Cores.Table
                         data={selectedDetails.map((item) => ({
-                          "Product Code": item[0],
-                          "Total Qty": item[1],
+                          ID: item[0],
+                          "Product Code": item[1],
                         }))}
-                        headers={["Product Code", "Total Qty"]}
+                        headers={["ID", "Product Code"]}
                       />
                     </div>
                   </section>

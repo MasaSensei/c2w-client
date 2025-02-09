@@ -1,6 +1,5 @@
 "use client";
 
-import { Cores } from "@/components/core";
 import { Fragments } from "@/components/fragments";
 import { Layouts } from "@/components/layouts";
 import { Batch } from "@/types/batch";
@@ -91,38 +90,41 @@ const ShowBatchToCuttersPage = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white">
-                    <tr className="">
-                      <td
-                        className="px-3 py-4 text-center align-top border-r font-semibold"
-                        rowSpan={1}
+                    {data?.details?.map((item, index) => (
+                      <tr
+                        key={index}
+                        className="border-b nth-child(last):border-none"
                       >
-                        {data?.details
-                          ?.map((item) => item.product_code)
-                          .join(", ")}
-                      </td>
-                      <td className="py-4 px-3 align-top border-x">
-                        <div className="bg-gray-100 px-3 py-2 rounded-md">
-                          <strong className="font-semibold">Quantity:</strong>{" "}
-                          {data?.details?.map((item) => item.quantity)}
-                          <br />
-                          <strong className="font-semibold">
-                            Pending Qty:
-                          </strong>{" "}
-                          2 pcs
-                          <br />
-                          <strong className="font-semibold">
-                            Sudah Potong Qty:
-                          </strong>{" "}
-                          0 pcs
-                        </div>
-                      </td>
-                      <td className="py-4 px-3 align-top border-x">
-                        <div className="bg-gray-100 px-3 py-2 rounded-md mb-1">
-                          <strong className="font-semibold">Quantity:</strong> 0
-                          pcs
-                        </div>
-                      </td>
-                    </tr>
+                        <td
+                          className="px-3 py-4 text-center align-top border-r font-semibold"
+                          rowSpan={1}
+                        >
+                          {item?.product_code}
+                        </td>
+                        <td className="py-4 px-3 align-top border-x">
+                          <div className="bg-gray-100 px-3 py-2 rounded-md">
+                            <strong className="font-semibold">Quantity:</strong>{" "}
+                            {item?.quantity} pcs
+                            <br />
+                            <strong className="font-semibold">
+                              Pending Qty:
+                            </strong>{" "}
+                            2 pcs
+                            <br />
+                            <strong className="font-semibold">
+                              Sudah Potong Qty:
+                            </strong>{" "}
+                            0 pcs
+                          </div>
+                        </td>
+                        <td className="py-4 px-3 align-top border-x">
+                          <div className="bg-gray-100 px-3 py-2 rounded-md mb-1">
+                            <strong className="font-semibold">Quantity:</strong>{" "}
+                            0 pcs
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
