@@ -103,7 +103,19 @@ const ShowBatchToCuttersPage = () => {
                         </td>
                         <td className="py-4 px-3 align-top border-x">
                           <div className="bg-gray-100 px-3 py-2 rounded-md">
-                            <strong className="font-semibold">Quantity:</strong>{" "}
+                            <strong className="font-semibold">
+                              Order Date:
+                            </strong>{" "}
+                            {item?.reference?.order_bahan_baku?.order_date}
+                            <br />
+                            <strong className="font-semibold">
+                              Order Invoice:
+                            </strong>{" "}
+                            {item?.reference?.order_bahan_baku?.invoice_number}
+                            <br />
+                            <strong className="font-semibold">
+                              Quantity:
+                            </strong>{" "}
                             {item?.quantity} pcs
                             <br />
                             <strong className="font-semibold">

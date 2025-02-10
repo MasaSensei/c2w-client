@@ -217,13 +217,14 @@ const CreateBatchToCuttersPage = () => {
 
   const formatSelectedDetails = () => {
     return selectedDetails.map((item) => ({
-      product_code: item[0], // Gantilah dengan ID yang sesuai dari database jika ada
+      id_reference: item[0],
+      product_code: item[1], // Gantilah dengan ID yang sesuai dari database jika ada
       reference_type: "cutters", // Sesuaikan dengan jenis yang sesuai
-      quantity: Number(item[1]),
-      total_yard: Number(item[2]),
-      cost_per_yard: parseFloat(item[3].replace("Rp", "").replace(/\D/g, "")), // Hapus semua non-angka, kecuali angka
-      sub_total: parseFloat(item[4].replace("Rp", "").replace(/\D/g, "")), // Sama seperti di atas
-      remarks: item[6],
+      quantity: Number(item[2]),
+      total_yard: Number(item[3]),
+      cost_per_yard: parseFloat(item[4].replace("Rp", "").replace(/\D/g, "")), // Hapus semua non-angka, kecuali angka
+      sub_total: parseFloat(item[5].replace("Rp", "").replace(/\D/g, "")), // Sama seperti di atas
+      remarks: item[7],
       is_active: true,
     }));
   };
@@ -238,16 +239,12 @@ const CreateBatchToCuttersPage = () => {
         remarks: fieldsValues.remarks || "-",
         is_active: true,
         details: {
-          id: selectedDetails.map((item) =>
-            item.map((item) => item.toString().slice(0, 1))
-          ),
           ...formatSelectedDetails(),
         },
       };
 
-      console.log(payload);
-      // await BatchService.create(payload);
-      // window.location.href = "/batch-to-cutters";
+      await BatchService.create(payload);
+      window.location.href = "/batch-to-cutters";
     } catch (err) {
       console.error("Error fetching data:", err);
       setOrderToCutters([]);
