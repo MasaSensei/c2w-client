@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # Build aplikasi Next.js
-RUN npm run build --no-lint
+RUN npm run build
 
 # Expose port yang digunakan oleh Next.js
 EXPOSE 3000
