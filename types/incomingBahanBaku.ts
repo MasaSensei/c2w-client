@@ -52,6 +52,7 @@ type Supplier = {
 export type IncomingBahanBaku = {
   id?: number;
   id_supplier?: number;
+  id_bahan_baku?: number;
   invoice_number?: string;
   invoice_date?: string;
   is_active?: number;

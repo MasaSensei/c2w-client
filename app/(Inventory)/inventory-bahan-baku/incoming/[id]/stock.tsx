@@ -91,8 +91,8 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
             ]
           );
 
-          const bahanBakuIdsFromAPI = incomingData.details.map((item: any) =>
-            item.id_bahan_baku.toString()
+          const bahanBakuIdsFromAPI = incomingData.details.map(
+            (item: IncomingBahanBaku) => item?.id_bahan_baku?.toString()
           );
 
           setRows(formattedRows);
@@ -101,7 +101,7 @@ const Stock = ({ onClose }: { onClose: () => void }) => {
             incomingData.details.map((item: IncomingBahanBaku) => [
               [
                 item?.roll?.toString(),
-                (item?.total_yard / item?.roll)?.toString(),
+                ((item?.total_yard || 0) / (item?.roll || 1))?.toString(),
               ],
             ])
           );
