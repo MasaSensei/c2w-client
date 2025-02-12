@@ -56,7 +56,7 @@ const CuttersPage = () => {
   const {
     control,
     handleSubmit,
-    setValue,
+    // setValue,
     formState: { errors },
   } = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -82,11 +82,19 @@ const CuttersPage = () => {
   };
 
   useEffect(() => {
-    WorkerService.getAll({ type: "cutters" })
-      .then((res) => {
-        setData(res.data.data);
-      })
-      .catch((err) => console.error("Error fetching workers:", err));
+    const fetchData = async () => {
+      try {
+        const response = await WorkerService.getAll({ type: "cutters" });
+        if (!response.data.data) {
+          setData([]);
+        }
+        setData(response.data.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -158,19 +166,19 @@ const CuttersPage = () => {
     }
   };
 
-  const handleEdit = (item: Record<string, string | number | boolean>) => {
-    const convertedData: Worker = {
-      id: Number(item.id),
-      name: item["Name"] as string,
-      min_cost: item["Minimum Cost"] as string,
-      contact: item["Contact Number"] as string,
-      is_active: true,
-      type: "cutters",
-    };
+  // const handleEdit = (item: Record<string, string | number | boolean>) => {
+  //   const convertedData: Worker = {
+  //     id: Number(item.id),
+  //     name: item["Name"] as string,
+  //     min_cost: item["Minimum Cost"] as string,
+  //     contact: item["Contact Number"] as string,
+  //     is_active: true,
+  //     type: "cutters",
+  //   };
 
-    setSelectedData(convertedData);
-    setIsOpen(true);
-  };
+  //   setSelectedData(convertedData);
+  //   setIsOpen(true);
+  // };
 
   return (
     <Layouts.Main>

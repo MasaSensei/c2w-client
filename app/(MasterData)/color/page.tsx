@@ -25,11 +25,21 @@ const ColorPage = () => {
   const headers = ["Color", "Remarks"];
 
   useEffect(() => {
-    ColorsService.getAll()
-      .then((res) => {
-        setdata(res.data.data);
-      })
-      .catch((err) => console.error("Error fetching color:", err));
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await ColorsService.getAll();
+        if (!response.data.data) {
+          setdata([]);
+        }
+        setdata(response.data.data);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, []);
 
   const {

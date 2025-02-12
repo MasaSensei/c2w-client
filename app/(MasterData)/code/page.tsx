@@ -10,7 +10,6 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Swal from "sweetalert2";
 import { CodesService } from "@/services/codes.service";
-import { ClipLoader } from "react-spinners";
 
 const formSchema = z.object({
   code: z.string().min(1, { message: "Code is required" }),
@@ -21,15 +20,24 @@ const CodePage = () => {
   const [data, setdata] = useState<Code[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedData, setSelectedData] = useState<Code | null>(null);
-  const [loading, setLoading] = useState(false);
   const headers = ["Kode", "Remarks"];
 
   useEffect(() => {
-    CodesService.getAll()
-      .then((res) => {
-        setdata(res.data.data);
-      })
-      .catch((err) => console.error("Error fetching code:", err));
+    const fetchData = async () => {
+      try {
+        const response = await CodesService.getAll();
+        if (!response.data.data) {
+          setdata([]);
+        }
+        setdata(response.data.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+
+        setdata([]);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const {
@@ -150,8 +158,6 @@ const CodePage = () => {
     });
 
     if (result.isConfirmed) {
-      setLoading(true);
-
       try {
         await CodesService.delete(item.id as number);
 
@@ -162,8 +168,6 @@ const CodePage = () => {
       } catch (error) {
         Swal.fire("Gagal!", "Terjadi kesalahan saat menghapus data", "error");
         console.error("Delete error:", error);
-      } finally {
-        setLoading(false);
       }
     }
   };
@@ -215,7 +219,6 @@ const CodePage = () => {
       <section className="flex-1 p-4">
         <div className="bg-white border boder-gray-200 rounded-lg w-full relative">
           <div className="w-fit min-w-full sm:flex sm:justify-center">
-            {loading && <ClipLoader color="black" />}
             <Cores.Table
               onEdit={handleEdit}
               headers={headers}

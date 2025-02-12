@@ -25,11 +25,10 @@ const OrderToCutterPage = () => {
     const fetchData = async () => {
       try {
         const res = await OrderToCuttersService.getAll();
-        if (res.data.data) {
-          setDatas(res.data.data);
-        } else {
+        if (!res.data.data) {
           setDatas([]);
         }
+        setDatas(res.data.data);
       } catch (err) {
         console.error("Error fetching data:", err);
         setDatas([]);
@@ -85,7 +84,6 @@ const OrderToCutterPage = () => {
     if (!datas?.length) return;
 
     const detailsTable = formatDetailsData(datas);
-    console.log();
     setDetailsTable(detailsTable as string[][][]);
   }, [datas]);
 

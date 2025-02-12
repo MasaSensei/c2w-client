@@ -10,7 +10,6 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Swal from "sweetalert2";
 import { ModelsService } from "@/services/models.service";
-import { ClipLoader } from "react-spinners";
 
 const formSchema = z.object({
   model: z.string().min(1, { message: "model is required" }),
@@ -21,15 +20,23 @@ const ColorPage = () => {
   const [data, setdata] = useState<Model[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedData, setSelectedData] = useState<Model | null>(null);
-  const [loading, setLoading] = useState(false);
   const headers = ["Model", "Remarks"];
 
   useEffect(() => {
-    ModelsService.getAll()
-      .then((res) => {
-        setdata(res.data.data);
-      })
-      .catch((err) => console.error("Error fetching model:", err));
+    const fetchData = async () => {
+      try {
+        const response = await ModelsService.getAll();
+        if (!response.data.data) {
+          setdata([]);
+        }
+        setdata(response.data.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setdata([]);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const {
@@ -145,8 +152,6 @@ const ColorPage = () => {
     });
 
     if (result.isConfirmed) {
-      setLoading(true);
-
       try {
         await ModelsService.delete(item.id as number);
 
@@ -157,8 +162,6 @@ const ColorPage = () => {
       } catch (error) {
         Swal.fire("Gagal!", "Terjadi kesalahan saat menghapus data", "error");
         console.error("Delete error:", error);
-      } finally {
-        setLoading(false);
       }
     }
   };
@@ -210,7 +213,6 @@ const ColorPage = () => {
       <section className="flex-1 p-4">
         <div className="bg-white border boder-gray-200 rounded-lg w-full relative">
           <div className="w-fit min-w-full sm:flex sm:justify-center">
-            {loading && <ClipLoader color="black" />}
             <Cores.Table
               onEdit={handleEdit}
               headers={headers}
